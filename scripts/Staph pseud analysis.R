@@ -268,6 +268,7 @@ rm(staph_MICs, MIC_q50, MIC_q90, AM_cols_staph_MICs)
 
 ####tables of MIC values####
 #tabulate number of isolates with each MIC value by year and antimicrobial, output list
+#use susc (has combo sign-MIC); also staph has had a TETRA 2013 isolate droppe for analysis
 MIC_table <- lapply(susc[AM_cols], function(x) as.data.frame(table(susc$Year, x))) 
 
 #pivot wide to have MIC values as columns
@@ -1103,6 +1104,15 @@ AM_cols_to_exclude <- c(paste(MICs_to_exclude_from_SA, "SIGN", sep="_"),
                         paste(MICs_to_exclude_from_SA, "END", sep="_"))
 
 staph <- staph[ , -which(names(staph) %in% AM_cols_to_exclude)]
+
+#TETRA has only one isolate tested in 2013 and none in 2010-2016; remove the 2013 isolate
+staph[(staph$Year==2013 & is.na(staph$TETRA_MIC)==FALSE), ] #one isolate, row 1735
+staph[(staph$Year==2013 & is.na(staph$TETRA_SIGN)==FALSE), "TETRA_SIGN"] <- NA
+staph[(staph$Year==2013 & is.na(staph$TETRA_START)==FALSE), "TETRA_START"] <- NA
+staph[(staph$Year==2013 & is.na(staph$TETRA_END)==FALSE), "TETRA_END"] <- NA
+staph[(staph$Year==2013 & is.na(staph$TETRA_MIC)==FALSE), "TETRA_MIC"] <- NA
+staph[1735,] #check
+
 #drugs for SA
 SA_drugs <- unlist(lapply(str_split(names(staph)[str_detect(names(staph),"_MIC")], "_"), '[[', 1))
 
@@ -1123,88 +1133,103 @@ apply_LRT <- function(drug_name, data) {
 LRT <- lapply(as.list(SA_drugs), function(x) apply_LRT(x,staph)) #apply to all drugs in staph
 names(LRT) <- SA_drugs
 
-LRT.p <- lapply(LRT, "[[", 4) #get P values
+LRT.p <- as.data.frame(cbind(lapply(LRT, "[[", 4))) #get P values as a vector; they are item 4 in each LRT result
+LRT.p$Antibiotic <- row.names(LRT.p)
+LRT.p <- LRT.p %>% dplyr::rename("P.Value"= "V1")
+
+
+#BH tests from the lowest p value to the highest so much arrange the isolates accordingly
+LRT.p$P.Value <- as.numeric(LRT.p$P.Value)
+LRT.p <- LRT.p %>% arrange(P.Value)
+LRT.p$BH.p.value <- BH(LRT.p$P.Value, alpha = 0.05)[["Adjusted.pvalues"]]
+
 
 #consider ranges of years with consistent dilutions (see MIC tables) (2017 - 2020; 2011 - 2016; 2007 - 2010)
+#had to set up these LRT tests while referening the MIC tables showing MICs in each year for each drug
+#store results
+LRT_subsets <- data.frame(AM=character(), Years=character(), P.Value=numeric())
 #AMIKAC: still P>0.05
-apply_LRT("AMIKAC", filter(staph, Year<2017))
-apply_LRT("AMIKAC", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMIKAC", "2007-2016", apply_LRT("AMIKAC", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMIKAC", "2017-2020", apply_LRT("AMIKAC", filter(staph, Year>2016))[[4]])
 
 #AMOLCA; P<0.05 for 2011-2016 and 2017-2020
-apply_LRT("AMOCLA", filter(staph, Year<2011))
-apply_LRT("AMOCLA", filter(staph, Year>2010 & Year<2017))
-apply_LRT("AMOCLA", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMOCLA", "2007-2010", apply_LRT("AMOCLA", filter(staph, Year<2011))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMOCLA", "2011-2016", apply_LRT("AMOCLA", filter(staph, Year>2010 & Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMOCLA", "2017-2020", apply_LRT("AMOCLA", filter(staph, Year>2016))[[4]])
 
 #AMPICI; P<0.05 for 2011-2016 and 2017-2020
-apply_LRT("AMPICI", filter(staph, Year<2011))
-apply_LRT("AMPICI", filter(staph, Year>2010 & Year<2017))
-apply_LRT("AMPICI", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMPICI", "2007-2010", apply_LRT("AMPICI", filter(staph, Year<2011))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMPICI", "2011-2016", apply_LRT("AMPICI", filter(staph, Year>2010 & Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("AMPICI", "2017-2020", apply_LRT("AMPICI", filter(staph, Year>2016))[[4]])
 
 #CEFAZO; P<0.05 for 2017-2020
-apply_LRT("CEFAZO", filter(staph, Year<2011))
-apply_LRT("CEFAZO", filter(staph, Year>2010 & Year<2017))
-apply_LRT("CEFAZO", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFAZO", "2007-2010", apply_LRT("CEFAZO", filter(staph, Year<2011))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFAZO", "2011-2016", apply_LRT("CEFAZO", filter(staph, Year>2010 & Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFAZO", "2017-2020", apply_LRT("CEFAZO", filter(staph, Year>2016))[[4]])
 
 #CEFOVE: p<0.05 for both time periods
-apply_LRT("CEFOVE", filter(staph, Year<2017))
-apply_LRT("CEFOVE", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFOVE", "2007-2016", apply_LRT("CEFOVE", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFOVE", "2017-2020", apply_LRT("CEFOVE", filter(staph, Year>2016))[[4]])
 
 #CHLORA: P=0.0501 for before 2017; P>0.05 after 2017
-apply_LRT("CHLORA", filter(staph, Year<2017))
-apply_LRT("CHLORA", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CHLORA", "2007-2016", apply_LRT("CHLORA", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CHLORA", "2017-2020", apply_LRT("CHLORA", filter(staph, Year>2016))[[4]])
 
 #CLINDA: P<0.05 for 2010-2020
-apply_LRT("CLINDA", filter(staph, Year<2010))
-apply_LRT("CLINDA", filter(staph, Year>2009))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CLINDA", "2007-2009", apply_LRT("CLINDA", filter(staph, Year<2010))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CLINDA", "2010-2020", apply_LRT("CLINDA", filter(staph, Year>2009))[[4]])
 
 #DOXYCY: P<0.05 2007-2016
-apply_LRT("DOXYCY", filter(staph, Year<2017))
-apply_LRT("DOXYCY", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("DOXYCY", "2007-2016", apply_LRT("DOXYCY", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("DOXYCY", "2017-2020", apply_LRT("DOXYCY", filter(staph, Year>2016))[[4]])
 
 #ENROFL: P<0.05 for 2010-2020
-apply_LRT("ENROFL", filter(staph, Year<2010))
-apply_LRT("ENROFL", filter(staph, Year>2009))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("ENROFL", "2007-2009", apply_LRT("ENROFL", filter(staph, Year<2010))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("ENROFL", "2010-2020", apply_LRT("ENROFL", filter(staph, Year>2009))[[4]])
 
 #ERYTH: P<0.05 2007-2016
-apply_LRT("ERYTH", filter(staph, Year<2017))
-apply_LRT("ERYTH", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("ERYTH", "2007-2016", apply_LRT("ERYTH", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("ERYTH", "2017-2020", apply_LRT("ERYTH", filter(staph, Year>2016))[[4]])
 
 #GENTAM: P<0.05 for both periods
-apply_LRT("GENTAM", filter(staph, Year<2017))
-apply_LRT("GENTAM", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("GENTAM", "2007-2016", apply_LRT("GENTAM", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("GENTAM", "2017-2020", apply_LRT("GENTAM", filter(staph, Year>2016))[[4]])
 
 #MARBOF: P<0.05 2007-2016
-apply_LRT("MARBOF", filter(staph, Year<2017))
-apply_LRT("MARBOF", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("MARBOF", "2007-2016", apply_LRT("MARBOF", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("MARBOF", "2017-2020", apply_LRT("MARBOF", filter(staph, Year>2016))[[4]])
 
 #TETRA: P>0.05 for all
-apply_LRT("TETRA", filter(staph, Year<2017))
-apply_LRT("TETRA", filter(staph, Year<2010))
-apply_LRT("TETRA", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("TETRA", "2007-2009", apply_LRT("TETRA", filter(staph, Year<2010))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("TETRA", "2017-2020", apply_LRT("TETRA", filter(staph, Year>2016))[[4]])
 
 #TRISUL: P<0.05 for 2007-2016
-apply_LRT("TRISUL", filter(staph, Year<2017))
-apply_LRT("TRISUL", filter(staph, Year>2016))
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("TRISUL", "2007-2016", apply_LRT("TRISUL", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("TRISUL", "2017-2020", apply_LRT("TRISUL", filter(staph, Year>2016))[[4]])
+
+#BH tests for subsets
+LRT_subsets$P.Value <- as.numeric(LRT_subsets$P.Value)
+LRT_subsets <- LRT_subsets %>% arrange(P.Value)
+LRT_subsets$BH.p.value <- BH(LRT_subsets$P.Value, alpha = 0.05)[["Adjusted.pvalues"]]
 
 
 #make nice MIC50, MIC90, LRT table
-LRT.p <- unlist(LRT.p) #unlist LRT for reference
-
 MIC_q_table <- gt(MIC_qs, groupname_col = "AM", rowname_col = "Q") %>%
   fmt_number(columns=contains("20"), drop_trailing_zeros=T) %>% 
   tab_options(row_group.as_column=TRUE) %>%
   tab_footnote("P < 0.05, asymptotic logrank k-sample test (permutation form) across all years, Finkelstein's scores.",
-               cells_row_groups(names(LRT.p)[LRT.p<0.05])) %>%
+               cells_row_groups(LRT.p$Antibiotic[LRT.p$BH.p.value<0.05])) %>%
   tab_footnote("Logrank tests were not performed on antimicrobials with more than 90% of isolates having a single MIC value",
-               cells_row_groups(unique(unlist(MIC_qs$AM[MIC_qs$AM %!in% names(LRT.p)])))) %>%
+               cells_row_groups(unique(unlist(MIC_qs$AM[MIC_qs$AM %!in% LRT.p$Antibiotic])))) %>%
   tab_footnote("P < 0.05 Logrank test for year range 2007-2016",
-               cells_row_groups(c("CEFOVE", "DOXYCY", "ERYTH", "GENTAM", "MARBOF", "TRISUL"))) %>%
+               cells_row_groups(LRT_subsets$AM[LRT_subsets$BH.p.value<0.05 & LRT_subsets$Years=="2007-2016"])) %>%
   tab_footnote("P < 0.05 Logrank test for year range 2011-2016",
-               cells_row_groups(c("AMOCLA", "AMPICI"))) %>%
+               cells_row_groups(LRT_subsets$AM[LRT_subsets$BH.p.value<0.05 & LRT_subsets$Years=="2011-2016"])) %>%
   tab_footnote("P < 0.05 Logrank test for year range 2010-2020",
-               cells_row_groups(c("CLINDA", "ENROFL"))) %>%
+               cells_row_groups(LRT_subsets$AM[LRT_subsets$BH.p.value<0.05 & LRT_subsets$Years=="2010-2020"])) %>%
   tab_footnote("P < 0.05 Logrank test for year range 2017-2020",
-               cells_row_groups(c("AMOCLA", "AMPICI", "CEFAZO", "CEFOVE", "GENTAM"))) %>%
+               cells_row_groups(LRT_subsets$AM[LRT_subsets$BH.p.value<0.05 & LRT_subsets$Years=="2017-2020"])) %>%
+  tab_footnote("NA: not applicable, no isolates tested against this antimicrobial in this year") %>%
   text_transform(
     locations = cells_stub(rows=everything()),
     fn = function(x){
@@ -1244,17 +1269,6 @@ MIC_data_req_columns <-
 
 #keep only drugs on the standard panel - already done
 MIC_data_std_panel_complete <- na.omit(MIC_data_req_columns) #remove NAs
-
-## Remove all data from 2007
-#MIC_data_std_panel_complete <- MIC_data_std_panel_complete %>% filter(Year != 2007)
-## Remove data points from 2013 for TETRA, for which only one isolate was tested
-## sample was tested in those years; if these are not removed, errors will occur
-MIC_data_std_panel_complete <- MIC_data_std_panel_complete %>% filter(!(Year == 2013 & 
-                                                                          drug %in% 
-                                                                          c('TETRA')
-))
-
-
 
 ## Run drug specific categroical regression models on year
 ## ic_np fits Turnbull's estimator, while ic_sp fits a semiparametric
