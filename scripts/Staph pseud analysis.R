@@ -1,3 +1,9 @@
+# ---
+# title: "Staphylococcus pseudintermedius AMR ananlysis"
+# authors: "Caroline Mevis, Casey Cazer, Ritwik Sadhu; Yuchen Xu"
+# ---
+
+
 require(checkpoint)
 
 checkpoint("2023-03-01")
@@ -30,7 +36,7 @@ require(grid)
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
-BiocManager::install("Icens")
+BiocManager::install("Icens") #update all [a] if required
 require(interval)
 require(survival)
 require(sgof)
@@ -39,7 +45,7 @@ require(sgof)
 
 ####Data Import and Cleaning####
 #import breakpoints
-bp <- read.csv("Staph breakpoints.csv", encoding = "UTF-8")
+bp <- read.csv("data/Staph breakpoints.csv", encoding = "UTF-8")
 names(bp)
 names(bp) <- c("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "Host.species", "Bact.species", "Body.Site", "Comments")
 
@@ -47,7 +53,7 @@ names(bp) <- c("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "H
 bp$R.value <- unlist(lapply(str_split(bp$R," "), '[', 2))
 
 ##original_data <- read.csv(file.choose(), stringsAsFactors=FALSE, header=TRUE, colClasses="character")
-staph <- read.csv("Staph_fulldata.csv", stringsAsFactors=FALSE, header=TRUE, colClasses= "character", strip.white = TRUE)
+staph <- read.csv("data/Staph_fulldata.csv", stringsAsFactors=FALSE, header=TRUE, colClasses= "character", strip.white = TRUE)
 
 #split the column Date and Time.
 name1 <- "Date"
@@ -216,7 +222,7 @@ histograms <- imap(susc[,AM_cols], ~{
 })
 
 #make names for saving figs
-hist_names <- imap(histograms, ~paste0("Graphs/Histograms/",.y,  ".png")) %>% flatten()
+hist_names <- imap(histograms, ~paste0("Figures and Tables/Histograms/",.y,  ".png")) %>% flatten()
 
 #save figs
 walk2(hist_names, histograms, ~ggsave(filename = .x, plot = .y))
@@ -368,10 +374,10 @@ MIC_gts[["TRISUL"]] <- gt_add_divider(MIC_gts[["TRISUL"]], columns="= 2", side="
 MIC_gts[["VANCOM"]] <- gt_add_divider(MIC_gts[["VANCOM"]], columns="= 2", side="right", style="dashed")
 
 #make names for saving tables as both html and png
-MIC_table_names <- imap(MIC_gts, ~paste0("MIC Tables/",.y,  "_MIC_table.html")) %>% flatten()
+MIC_table_names <- imap(MIC_gts, ~paste0("Figures and Tables/MIC_Tables/",.y,  "_MIC_table.html")) %>% flatten()
 walk2(MIC_table_names, MIC_gts, ~gtsave(filename = .x, data = .y)) #save
 
-MIC_table_names <- imap(MIC_gts, ~paste0("MIC Tables/",.y,  "_MIC_table.png")) %>% flatten()
+MIC_table_names <- imap(MIC_gts, ~paste0("Figures and Tables/MIC_Tables//",.y,  "_MIC_table.png")) %>% flatten()
 walk2(MIC_table_names, MIC_gts, ~gtsave(filename = .x, data = .y)) #save
 #if saving as png gives "Error in s$close() : attempt to apply non-function", re-install webshot2
 #NOTE: these MIC tables may not show the same resistance or NS prevalence as the antibiogram for BLs because antibiogram S/NS is aligned for OXA/PEN results and other BL
@@ -593,7 +599,7 @@ table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFP", "OXA"), useNA="always"
 table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEP", "OXA"), useNA="always")
 
 #now for PEN-S: these isolates should be susceptible to all other b-lactams
-PEN_probs <- MIC_interp %>% filter(PENICI==FALSE & (OXACIL==T | AMPICI==T | AMOCLA==T | CEFAZO==T | CEFOVE==T | CEFPOD==T | CEFTIF==T | CEPHAL==T)) #only AMPICI has inconsistent data for this isolate
+PEN_probs <- MIC_interp %>% filter(PENICI==FALSE & (OXACIL==T | AMPICI==T | AMOCLA==T | CEFAZO==T | CEFOVE==T | CEFPOD==T | CEPHAL==T)) #only AMPICI has inconsistent data for this isolate
 View(PEN_probs)
 table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PEN", "AMP"), useNA="always")  #1 isolate, S to PENICI, R to AMPICI. AMPICI and PENICI should be consistent with each other (both are penicillinase-labile penicillins)
 #since the PENICI breakpoint is for humans and the AMPICI breakpoint is for dogs, we preferentially took the AMPICI breakpoint interpretation and turned the PENICI to R. 
@@ -800,7 +806,7 @@ prev <- ggplot(beta_long, aes(Year, value)) +
   theme(legend.position="top", plot.margin=unit(c(10,10,10,10), "pt"), plot.title=element_text(size=24, hjust=0.5), axis.text=element_text(size=22))+
   guides(color=guide_legend(nrow=2, keywidth=4, override.aes = list(linetype = linetype)))
 
-png('Graphs/Prevalence/betaprev.png', width=20, height=10, units='in', res=600)
+png('Figures and Tables/Prevalence/betaprev.png', width=20, height=10, units='in', res=600)
 plot.new()
 prev
 dev.off()
@@ -836,7 +842,7 @@ prev <- ggplot(subset(other_long), aes(Year, value)) +
   theme_classic(base_size = 20)+
   theme(legend.position="top", plot.margin=unit(c(10,10,10,10), "pt"), plot.title=element_text(size=24, hjust=0.5), axis.text=element_text(size=22))+
   guides(color=guide_legend(nrow=2, keywidth=4, override.aes = list(linetype = linetype)))
-png('Graphs/Prevalence/otherprev.png', width=20, height=10, units='in', res=600)
+png('Figures and Tables/Prevalence/otherprev.png', width=20, height=10, units='in', res=600)
 plot.new()
 prev
 dev.off()
@@ -891,7 +897,7 @@ mdr_profile <- function (data, index, AM_class){
 
 
 MDR <- mdr_profile(data = MIC_interp, index = a_index, AM_class = AM_Class)
-sink("MDR results.txt") ##start saving results to file
+sink("Text Results/MDR results.txt") ##start saving results to file
 cat("number of isolates that are MDR (resistant to 3 or more classes):  ") ##using cat rather than print eliminates printed line numbers
 cat(sum(MDR$NumClass>=3))
 cat("\npercent of isolates that are MDR:  ") ##\n prints a new line
@@ -914,7 +920,7 @@ ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) +
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,25))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
         = element_text(size=16))
-ggsave("Graphs/totalMDR.png")
+ggsave("Figures and Tables/MDR/totalMDR.png")
 
 
 #How many isolates are resistant to each specific antimicrobial class?
@@ -965,7 +971,7 @@ ggplot(MDRclassfreq, aes(factor(AMclass), pct, fill = factor(AMclass))) +
   scale_fill_manual("Class", values=colors, labels = labels)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
         = element_text(size=16), legend.title = element_text(size=14), legend.text = element_text(size = 10))
-ggsave("Graphs/MDRclass.png")
+ggsave("Figures and Tables/MDR/MDRclass.png")
 
 rm(AM, Class, colors, labels)
 
@@ -1044,7 +1050,8 @@ Table1_gt <- gt(Table1, rowname_col = "Abbreviation") %>%
   tab_footnote("2007 was excluded because fewer than 30 isolates were available")%>%
   tab_footnote("Multidrug Resistance prevalence (number of MDR isolates)", location=cells_stub("MDR"))
 
-gtsave(Table1_gt, "Table1.docx")
+gtsave(Table1_gt, "Figures and Tables/Table1.docx")
+gtsave(Table1_gt, "Figures and Tables/Table1.html")
 
 
 ####Breakpoint and Class Table####
@@ -1066,7 +1073,8 @@ bp.table$Species <- str_to_title(bp.table$Species)
 bp_gt <- gt(bp.table) %>%
   cols_align(align="center",
              columns=c(S,I,R))
-gtsave(bp_gt, "Breakpoint table.docx")
+gtsave(bp_gt, "Figures and Tables/Breakpoint table.docx")
+gtsave(bp_gt, "Figures and Tables/Breakpoint table.html")
 
 
 ####Survival analysis data prep####
@@ -1098,7 +1106,7 @@ staph <- staph[ , -which(names(staph) %in% AM_cols_to_exclude)]
 #drugs for SA
 SA_drugs <- unlist(lapply(str_split(names(staph)[str_detect(names(staph),"_MIC")], "_"), '[[', 1))
 
-write_xlsx(staph,"CanineStaphpseud_separated2007-2020.xlsx") #save file ready for survival analysis
+write_xlsx(staph,"data/CanineStaphpseud_separated2007-2020.xlsx") #save file ready for survival analysis
 
 
 ####Log-Rank Testing####
@@ -1205,7 +1213,8 @@ MIC_q_table <- gt(MIC_qs, groupname_col = "AM", rowname_col = "Q") %>%
       glue::glue("{text}<sub>{sub}</sub>")
     })
 
-gtsave(MIC_q_table, "MIC_quantiles.html")
+gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.docx")
+gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.html")
 
 ####Ritwik and Yuchen MIC analysis####
 #select only Year, full date, and MIC columns
@@ -1275,7 +1284,7 @@ plot_drug_specific_fit <- function(drug_name) {
   print(drug_name)
   drug_data <- MIC_data_std_panel_complete %>%
     dplyr::filter(drug == drug_name)
-  png(paste0('Graphs/Non_parametric_fits/',
+  png(paste0('Figures and Tables/Nonparametric Fits/',
              drug_name, 
              '.png'))
   plot(
@@ -1366,7 +1375,7 @@ baselines_fit <- function(drug_name) {
       cbind(drug_data, spline2_df[match(round(drug_data$year_num, 2), 
                                         round(spline2_df$year_num, 2)),])
   }
-  png(paste0("Graphs/Baseline Fits/",drug_name,".png"))
+  png(paste0("Figures and Tables/Baseline Fits/",drug_name,".png"))
   diag_baseline(cbind(START, END) ~ year_num,
                 model="ph",
                 data=drug_data,
@@ -1379,7 +1388,7 @@ baselines_fit <- function(drug_name) {
 #graphics::layout(matrix(seq_len(6),3,1, byrow=T), respect=F)
 baseline_plots <- lapply(as.list(SA_drugs), baselines_fit)
 
-#weibull, lnorm, and loglogistic all seem appropriate/equivalent
+#weibull, lnorm, and loglogistic all seem appropriate/equivalent based on visual examination of plots
 
 ## Set baseline distribution
 baseline_dist <- 'weibull'
@@ -1489,7 +1498,7 @@ plot_drug_specific_smooth_fit <- function(drug_name){
   
   drug_years = floor(min_year):2020
   
-  png(paste0('Graphs/Smooth_Bayesian_fits/',
+  png(paste0('Figures and Tables/Smooth_Bayesian_fits/',
              drug_name,
              '.png'))
   if(min_year <= 2010){
@@ -1547,7 +1556,7 @@ plot_drug_specific_smooth_fit <- function(drug_name){
                           ci_level = 0.95)
   }
   
-  png(paste0('Graphs/Smooth_Bayesian_fits/',
+  png(paste0('Figures and Tables/Smooth_Bayesian_fits/',
              drug_name,
              '_year_survival.png'))
   
