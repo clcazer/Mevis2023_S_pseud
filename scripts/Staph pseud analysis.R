@@ -1243,9 +1243,8 @@ gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.html")
 
 ####Ritwik and Yuchen MIC analysis####
 #select only Year, full date, and MIC columns
-staph_pseud_separated <- staph
 MIC_data_req_columns <-
-  staph_pseud_separated %>% 
+  staph %>% 
   mutate(YMD = as.POSIXlt(paste(paste(Year,Month,Day, sep='-'), Time))) %>%
   select(c('Year', 'YMD', ends_with('_START'), ends_with('_END')))
 
