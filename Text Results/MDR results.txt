@@ -1,2 +1,0 @@
-number of isolates that are MDR (resistant to 3 or more classes):  837
-percent of isolates that are MDR:  46.81 %

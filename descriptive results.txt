@@ -1,1 +1,0 @@
-Number of isolates analyzed:  [1] 1804

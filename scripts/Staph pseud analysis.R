@@ -148,9 +148,10 @@ staph <- staph[ , -which(names(staph) %in% AMs_to_exclude)]
 susc <- staph
 
 #descriptive results for text
-sink("descriptive results.txt")
+sink("Text Results/descriptive results.txt")
 cat("Number of isolates analyzed:  ")
-
+cat(nrow(staph))
+sink()
 
 
 ####create survival analysis dataset ####
@@ -913,13 +914,23 @@ mdr_profile <- function (data, index, AM_class){
   mdr_profile #output
 }
 
-
+#generate mdr profiles
 MDR <- mdr_profile(data = MIC_interp, index = a_index, AM_class = AM_Class)
-sink("Text Results/MDR results.txt") ##start saving results to file
-cat("number of isolates that are MDR (resistant to 3 or more classes):  ") ##using cat rather than print eliminates printed line numbers
+sink("Text Results/descriptive results.txt", append=T) ##start saving results to file
+cat("\n number of isolates in the prevalence analysis:  ")
+cat(nrow(MIC_interp))
+cat("\n pan-susceptible prevalence:  ")
+cat(sum(MDR$NumClass==0))
+cat("\n percent of pan-susceptible isolates: ")
+cat(round((sum(MDR$NumClass==0)/nrow(MDR))*100,),"%")
+cat("\n number of isolates that are MDR (resistant to 3 or more classes):  ") ##using cat rather than print eliminates printed line numbers
 cat(sum(MDR$NumClass>=3))
-cat("\npercent of isolates that are MDR:  ") ##\n prints a new line
-cat(round((sum(MDR$NumClass>=3)/nrow(MDR))*100,2),"%")
+cat("\n percent of isolates that are MDR:  ") ##\n prints a new line
+cat(round((sum(MDR$NumClass>=3)/nrow(MDR))*100,),"%")
+cat("\n >=5 class prevalence:  ")
+cat(sum(MDR$NumClass>=5))
+cat("\n percent of >=5 class isolates: ")
+cat(round((sum(MDR$NumClass>=5)/nrow(MDR))*100,),"%")
 sink()
 
 #MDR Graphical Representations
@@ -929,7 +940,7 @@ MDRpct$NumClass <- as_factor(MDRpct$NumClass)
 MDRpct$NumClass <- fct_relevel(MDRpct$NumClass, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 
 #plot % isolates by N resistance classes
-ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) + 
+MDRpct_fig <- ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) + 
   geom_bar(stat = 'identity') + 
   xlab("Number of Resistant Antimicrobial Classes") + 
   ylab("Percent Isolates") + 
@@ -938,7 +949,7 @@ ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) +
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,25))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
         = element_text(size=16))
-ggsave("Figures and Tables/MDR/totalMDR.png")
+ggsave("Figures and Tables/MDR/totalMDR.png", MDRpct_fig)
 
 
 #How many isolates are resistant to each specific antimicrobial class?
@@ -977,10 +988,10 @@ labels <- c("Aminoglycides", "Ansamycins", "Beta-Lactams", "Fluoroquinolones", "
 
 ##tabulate number of isolates resistant to each class
 MDRclass$value <- as.factor(MDRclass$value)
-MDRclassfreq <- MDRclass %>% dplyr::count(value) %>% mutate(pct = n / sum(n) * 100)
+MDRclassfreq <- MDRclass %>% dplyr::count(value) %>% mutate(pct = n / sum(n) * 100) ##the denominator is not number of isolates; it is number of resistant test results (from pivot_longer); this is incorrect
 MDRclassfreq <- dplyr::rename(MDRclassfreq, "AMclass" = "value")
 
-ggplot(MDRclassfreq, aes(factor(AMclass), pct, fill = factor(AMclass))) + 
+MDRclass_fig <- ggplot(MDRclassfreq, aes(factor(AMclass), pct, fill = factor(AMclass))) + 
   geom_bar(stat = 'identity') + 
   xlab("Antimicrobial Class") + 
   ylab("Percent Resistant Isolates")+ 
@@ -988,8 +999,15 @@ ggplot(MDRclassfreq, aes(factor(AMclass), pct, fill = factor(AMclass))) +
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,30))+
   scale_fill_manual("Class", values=colors, labels = labels)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
-        = element_text(size=16), legend.title = element_text(size=14), legend.text = element_text(size = 10))
-ggsave("Figures and Tables/MDR/MDRclass.png")
+        = element_text(size=16), legend.title = element_text(size=14), legend.text = element_text(size = 10),,
+        legend.position = "bottom")
+ggsave("Figures and Tables/MDR/MDRclass.png", MDRclass_fig)
+
+#arrange for Fig 1
+png('Figures and Tables/MDR/Figure 1.png', width=20, height=20, units='in', res=600)
+plot.new()
+ggarrange(MDRpct_fig, MDRclass_fig, nrow=2, labels=c("A", "B"), font.label=list(size=24, face="bold"))
+dev.off()
 
 rm(AM, Class, colors, labels)
 
@@ -1063,7 +1081,7 @@ Table1$P.Value[Table1$P.Value=="0"] <- "<0.001"
 
 #nice gt table
 Table1_gt <- gt(Table1, rowname_col = "Abbreviation") %>%
-  tab_footnote("For each antimicrobial: Non-susceptible isolate prevalence (number of non-susceptible isolates)") %>%
+  tab_footnote("For each antimicrobial: Non-susceptible isolate prevalence (number of isolates tested)") %>%
   tab_footnote("P-value from Cochran-Armitage test for trend") %>%
   tab_footnote("2007 was excluded because fewer than 30 isolates were available")%>%
   tab_footnote("Multidrug Resistance prevalence (number of MDR isolates)", location=cells_stub("MDR"))
