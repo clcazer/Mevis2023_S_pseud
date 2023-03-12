@@ -73,6 +73,12 @@ staph <- filter(staph, Body.Site %in% c("NASSK", "PUSSK", "SEB", "SKI", "SKIB",
 #body sites
 table(staph$Body.Site) #only two body sites given, with majority being labeled SKI
 
+#only include S. intermedius from between 2007 and 2012
+unique(staph$Organism.Name) #note spaces after intemedius and the mis-spelling of pseudintermedius
+table(staph$Organism.Name, staph$Year) #4 intermedius isolates after 2012
+staph$Organism.Name[staph$Organism.Name=="Staphylococcus pseudintermediu    "] <- "Staphylococcus pseudintermedius" #correct mis-spelling
+staph <- filter(staph, !(Organism.Name == "Staphylococcus intermedius    " &
+                          Year>2011))
 
 #removed antibiotic columns which only consisted of NA values 
 staph <- staph[ , colSums(is.na(staph)) < nrow(staph)]
@@ -141,6 +147,11 @@ staph <- staph[ , -which(names(staph) %in% AMs_to_exclude)]
 #later analysis uses combined sign and MIC, saving dataset to use
 susc <- staph
 
+#descriptive results for text
+sink("descriptive results.txt")
+cat("Number of isolates analyzed:  ")
+nrow(staph)
+sink()
 
 ####create survival analysis dataset ####
 #split sign from MIC for survival analysis
