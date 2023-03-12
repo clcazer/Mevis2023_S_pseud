@@ -810,7 +810,7 @@ prev <- ggplot(beta_long, aes(Year, value)) +
   geom_point(aes(colour = variable), size=1.5)+
   #geom_label_repel(data = subset(beta_long, Year==2008), aes(label=variable), point.padding=0.25, min.segment.length = 1, nudge_x=0.5, size=5, max.overlaps = Inf)+ ##CC: option to add some missing labels:  max.overlaps = Inf; nudge not working/labels disappearing
   geom_label_repel(data = subset(beta_long, Year==2020), aes(label=variable), point.padding=0.25, min.segment.length =1, nudge_x=1, size=5, max.overlaps = Inf)+  ##CC: option to add some missing labels:  max.overlaps = Inf
-  labs(x="Year", y="Prevalence of Resistance")+
+  labs(x="Year", y="Proportion of Non-Susceptible")+
   scale_color_manual("Antimicrobial",values=colors)+
   scale_linetype_manual("Antimicrobial", values=linetype)+
   scale_x_continuous(limits=c(2008,2021), breaks=seq(2008, 2020, 1), expand=c(0,0.2))+
@@ -847,7 +847,7 @@ prev2 <- ggplot(subset(other_long), aes(Year, value)) +
   geom_point(aes(colour=variable), size=1.5)+
   #geom_label_repel(data=subset(other_long, Year==2008), aes(label=variable), point.padding=0.25, min.segment.length = 1, nudge_x=0, size=5)+
   geom_label_repel(data=subset(other_long, Year==2020), aes(label=variable), point.padding=0.25, min.segment.length =1, nudge_x=1, size=5)+
-  labs(x="Year", y="Prevalence of Resistance")+
+  labs(x="Year", y="Proportion of Non-Susceptible")+
   scale_color_manual("Antimicrobial",values=colors)+
   scale_linetype_manual("Antimicrobial", values=linetype)+
   scale_x_continuous(limits=c(2008,2021), breaks=seq(2008, 2020, 1), expand=c(0,0.2))+
@@ -942,23 +942,44 @@ MDRpct$NumClass <- fct_relevel(MDRpct$NumClass, "0", "1", "2", "3", "4", "5", "6
 #plot % isolates by N resistance classes
 MDRpct_fig <- ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) + 
   geom_bar(stat = 'identity') + 
-  xlab("Number of Resistant Antimicrobial Classes") + 
-  ylab("Percent Isolates") + 
+  xlab("Number of Non-Susceptible\nAntimicrobial Classes") + 
+  ylab("Percent of Isolates") + 
   theme_bw() +
   scale_x_discrete(limits = levels(MDRpct$NumClass))+
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,25))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
-        = element_text(size=16))
-ggsave("Figures and Tables/MDR/totalMDR.png", MDRpct_fig)
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+ggsave("Figures and Tables/MDR/Figure 1.png", MDRpct_fig)
 
 
 #How many isolates are resistant to each specific antimicrobial class?
 ##use the Classes.sort column in MDR
-MDRclass <- MDR$Classes.sort #is a list
-MDRclass <- ldply(MDRclass, rbind) #each isolate is a row with one AM class designation per column
-MDRclass <- pivot_longer(MDRclass, cols = everything()) #pivot into long form
-MDRclass <- MDRclass %>% drop_na() #remove rows with NA (from isolates with >=1 class not resistant)
-#MDRclass now has a row for each appearance of an AM class resistance
+View(MDR$Classes.sort) #is a list
+
+#identify presence/absence of each class resistance in each isolate
+MDRclass <- data.frame(matrix(NA, nrow=nrow(MIC_interp),
+                              ncol=length(unique(AM_Class$Class)))) #create data frame
+colnames(MDRclass) <- unique(AM_Class$Class)
+MDRclass$A <- unlist(lapply(MDR$Classes.sort, function(x)
+  "A" %in% x))
+MDRclass$B <- unlist(lapply(MDR$Classes.sort, function(x)
+  "B" %in% x))
+MDRclass$P <- unlist(lapply(MDR$Classes.sort, function(x)
+  "P" %in% x))
+MDRclass$M <- unlist(lapply(MDR$Classes.sort, function(x)
+  "M" %in% x))
+MDRclass$T <- unlist(lapply(MDR$Classes.sort, function(x)
+  "T" %in% x))
+MDRclass$F <- unlist(lapply(MDR$Classes.sort, function(x)
+  "F" %in% x))
+MDRclass$N <- unlist(lapply(MDR$Classes.sort, function(x)
+  "N" %in% x))
+MDRclass$AN <- unlist(lapply(MDR$Classes.sort, function(x)
+  "AN" %in% x))
+MDRclass$S <- unlist(lapply(MDR$Classes.sort, function(x)
+  "S" %in% x))
+MDRclass$G <- unlist(lapply(MDR$Classes.sort, function(x)
+  "G" %in% x))
+
 
 #Colors
 #A = Aminoglycides alpha("#E69F00", 1)
@@ -987,27 +1008,23 @@ labels <- c("Aminoglycides", "Ansamycins", "Beta-Lactams", "Fluoroquinolones", "
             "Macrolides", "Nitrofurans", "Phenicols", "Sulfonamides", "Tetracyclines")
 
 ##tabulate number of isolates resistant to each class
-MDRclass$value <- as.factor(MDRclass$value)
-MDRclassfreq <- MDRclass %>% dplyr::count(value) %>% mutate(pct = n / sum(n) * 100) ##the denominator is not number of isolates; it is number of resistant test results (from pivot_longer); this is incorrect
-MDRclassfreq <- dplyr::rename(MDRclassfreq, "AMclass" = "value")
+MDRclassfreq <- as.data.frame(sapply(MDRclass, function(x) sum(x)))
+MDRclassfreq$AMclass <- row.names(MDRclassfreq)
+colnames(MDRclassfreq) <- c("value", "AMclass")
+MDRclassfreq$pct <- MDRclassfreq$value/nrow(MIC_interp) #note that the denominator here is all isolates, not just isolate tested against that class
 
-MDRclass_fig <- ggplot(MDRclassfreq, aes(factor(AMclass), pct, fill = factor(AMclass))) + 
+MDRclass_fig <- ggplot(MDRclassfreq, aes(factor(AMclass), pct*100, fill = factor(AMclass))) + 
   geom_bar(stat = 'identity') + 
   xlab("Antimicrobial Class") + 
-  ylab("Percent Resistant Isolates")+ 
+  ylab("Percent Non-susceptible Isolates")+ 
   theme_bw()+
-  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,30))+
+  scale_y_continuous(limits = c(0,100))+
   scale_fill_manual("Class", values=colors, labels = labels)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text 
-        = element_text(size=16), legend.title = element_text(size=14), legend.text = element_text(size = 10),,
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        text = element_text(size=16), legend.title = element_text(size=14), legend.text = element_text(size = 10),
         legend.position = "bottom")
 ggsave("Figures and Tables/MDR/MDRclass.png", MDRclass_fig)
 
-#arrange for Fig 1
-png('Figures and Tables/MDR/Figure 1.png', width=20, height=20, units='in', res=600)
-plot.new()
-ggarrange(MDRpct_fig, MDRclass_fig, nrow=2, labels=c("A", "B"), font.label=list(size=24, face="bold"))
-dev.off()
 
 rm(AM, Class, colors, labels)
 
