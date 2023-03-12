@@ -150,8 +150,8 @@ susc <- staph
 #descriptive results for text
 sink("descriptive results.txt")
 cat("Number of isolates analyzed:  ")
-nrow(staph)
-sink()
+
+
 
 ####create survival analysis dataset ####
 #split sign from MIC for survival analysis
@@ -841,7 +841,7 @@ colors <- c(alpha("#E69F00", 1), #AMIKAC A
             alpha("#882255", 1)) #VANCOM G 
 linetype <- c(1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 3, 1, 3, 1, 1)
 
-prev <- ggplot(subset(other_long), aes(Year, value)) +
+prev2 <- ggplot(subset(other_long), aes(Year, value)) +
   geom_line(aes(colour = variable), size=1.5, linetype=rep(linetype,rep(13,15)))+ ##also gave linetype length error. changed form rep(13,15) ##CMC: got the same error so I changed it back and it worked?
   geom_point(aes(colour=variable), size=1.5)+
   #geom_label_repel(data=subset(other_long, Year==2008), aes(label=variable), point.padding=0.25, min.segment.length = 1, nudge_x=0, size=5)+
@@ -856,10 +856,16 @@ prev <- ggplot(subset(other_long), aes(Year, value)) +
   guides(color=guide_legend(nrow=2, keywidth=4, override.aes = list(linetype = linetype)))
 png('Figures and Tables/Prevalence/otherprev.png', width=20, height=10, units='in', res=600)
 plot.new()
-prev
+prev2
 dev.off()
 
-rm(prev, beta, other, beta_long, other_long, colors, linetype)
+#arrange into Figure2A/B
+png('Figures and Tables/Prevalence/Figure 2.png', width=20, height=20, units='in', res=600)
+plot.new()
+ggarrange(prev, prev2, nrow=2, labels=c("A", "B"), font.label=list(size=30, face="bold"))
+dev.off()
+
+rm(prev, prev2, beta, other, beta_long, other_long, colors, linetype)
 
 
 ####MDR profiles####
