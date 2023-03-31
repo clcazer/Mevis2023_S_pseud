@@ -1511,7 +1511,16 @@ names(smooth_fits) <- SA_drugs
 
 #regression summaries, but note that these are not easily interpretable. Splines must be visualized
 lapply(smooth_fits, summary)
-##CC: should we examine the MCMC chains?
+
+##CC: MCMC chains
+get_MCMC <- function(drug_name){
+  pdf(paste0("Figures and Tables/Smooth_Bayesian_fits/MCMC/",drug_name,".pdf"))
+  plot(smooth_fits[[drug_name]]$mcmcList)
+  title(drug_name)
+  dev.off()
+}
+lapply(as.list(SA_drugs), get_MCMC)
+
 
 ##CC: models with numeric year
 baseline_dist <- 'lnorm'
