@@ -37,6 +37,7 @@ if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
 BiocManager::install("Icens") #update all [a] if required
+require(Icens)
 require(interval)
 require(survival)
 require(sgof)
@@ -1223,6 +1224,10 @@ LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFAZO", "2017-2020", apply_LRT("CEFAZO
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFOVE", "2007-2016", apply_LRT("CEFOVE", filter(staph, Year<2017))[[4]])
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFOVE", "2017-2020", apply_LRT("CEFOVE", filter(staph, Year>2016))[[4]])
 
+#CEFPOD: p<0.05 for both time periods
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFPOD", "2007-2016", apply_LRT("CEFPOD", filter(staph, Year<2017))[[4]])
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CEFPOD", "2017-2020", apply_LRT("CEFPOD", filter(staph, Year>2016))[[4]])
+
 #CHLORA: P=0.0501 for before 2017; P>0.05 after 2017
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CHLORA", "2007-2016", apply_LRT("CHLORA", filter(staph, Year<2017))[[4]])
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("CHLORA", "2017-2020", apply_LRT("CHLORA", filter(staph, Year>2016))[[4]])
@@ -1250,6 +1255,9 @@ LRT_subsets[nrow(LRT_subsets)+1,] <-  c("GENTAM", "2017-2020", apply_LRT("GENTAM
 #MARBOF: P<0.05 2007-2016
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("MARBOF", "2007-2016", apply_LRT("MARBOF", filter(staph, Year<2017))[[4]])
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("MARBOF", "2017-2020", apply_LRT("MARBOF", filter(staph, Year>2016))[[4]])
+
+#OXACIL: P<0.05 for 2010-2020
+LRT_subsets[nrow(LRT_subsets)+1,] <-  c("OXACIL", "2010-2020", apply_LRT("OXACIL", filter(staph, Year>2009))[[4]])
 
 #TETRA: P>0.05 for all
 LRT_subsets[nrow(LRT_subsets)+1,] <-  c("TETRA", "2007-2009", apply_LRT("TETRA", filter(staph, Year<2010))[[4]])
@@ -1321,7 +1329,7 @@ MIC_data_req_columns <-
 #keep only drugs on the standard panel - already done
 MIC_data_std_panel_complete <- na.omit(MIC_data_req_columns) #remove NAs
 
-## Run drug specific categroical regression models on year
+## Run drug specific categorical regression models on year
 ## ic_np fits Turnbull's estimator, while ic_sp fits a semiparametric
 ## hazard function estimator based on proportional hazards ('ph') or
 ## proportional odds ('po') assumption.
@@ -1496,11 +1504,13 @@ get_smooth_drug_specific_fit <- function(drug_name) {
   return(bayes_model)
 }
 
-
+#get model fits
+set.seed(1234)
 smooth_fits <- lapply(as.list(SA_drugs), get_smooth_drug_specific_fit)
 names(smooth_fits) <- SA_drugs
 
-lapply(smooth_fits, summary) ##CC added; but are these interpretable? the spline shape probably makes it very hard to interpret
+#regression summaries, but note that these are not easily interpretable. Splines must be visualized
+lapply(smooth_fits, summary)
 ##CC: should we examine the MCMC chains?
 
 ##CC: models with numeric year
@@ -1541,8 +1551,12 @@ get_smooth_drug_specific_fit_year_num <- function(drug_name) {
   
   return(bayes_model)
 }
+
+#get model fits with year as numeric predictor rather than splines
+set.seed(1234)
 year_num_fits_ln <- lapply(as.list(SA_drugs), get_smooth_drug_specific_fit_year_num)
 names(year_num_fits_ln) <- SA_drugs
+#regression model summaries with numeric year predictor
 lapply(year_num_fits_ln, summary)
 
 
@@ -1603,9 +1617,9 @@ plot_drug_specific_smooth_fit <- function(drug_name){
   max_conc <- max((MIC_data_std_panel_complete %>%
                      filter(drug == drug_name))$START)
   if (is.na(bp_drug)==TRUE){bp_drug <- floor((min_conc+max_conc)/2)} #for drugs without bp -- CEFTIF
-  c1 <- if(min_conc>round(0.25*bp_drug,2)){min_conc} else{round(0.25*bp_drug,2)}
-  c2 <- if(max_conc>round(4*bp_drug,1)){max_conc} else{round(4*bp_drug,1)}
-  concentrations <- sort(unique(c(c1, round(0.25*bp_drug,2), bp_drug, round(4*bp_drug,1), c2))) #plot bp concentration, 1/4 x bp, 4xbp, minimum conc tested, max conc tested
+  c1 <- if(min_conc>round(0.25*bp_drug,2)){min_conc} else{c(min_conc, round(0.25*bp_drug,2))}
+  c2 <- if(max_conc>round(4*bp_drug,1)){c(round(4*bp_drug,1), max_conc)} else{max_conc}
+  concentrations <- sort(unique(c(c1, bp_drug, c2))) #plot bp concentration, 1/4 x bp (if >min), 4xbp (if <max), minimum conc tested, max conc tested
   
   if(min_year <= 2010){
     surv_probs <- survCIs(bayes_model,
