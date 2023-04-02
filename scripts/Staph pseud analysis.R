@@ -1467,10 +1467,10 @@ baseline_plots <- lapply(as.list(SA_drugs), baselines_fit)
 baseline_dist <- 'weibull'
 
 #### Function for drug specific fits  ####
-get_smooth_drug_specific_fit <- function(drug_name) {
+get_smooth_drug_specific_fit <- function(drug_name, data) {
   print(drug_name)
   ## Subset data to drug
-  drug_data = MIC_data_std_panel_complete %>% filter(drug == drug_name)
+  drug_data = data %>% filter(drug == drug_name)
   
   if(min(drug_data$Year) <= 2010){ #select year range
     drug_data <-
@@ -1506,24 +1506,25 @@ get_smooth_drug_specific_fit <- function(drug_name) {
 
 #get model fits
 set.seed(1234)
-smooth_fits <- lapply(as.list(SA_drugs), get_smooth_drug_specific_fit)
+smooth_fits <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit(x, MIC_data_std_panel_complete))
 names(smooth_fits) <- SA_drugs
 
 #regression summaries, but note that these are not easily interpretable. Splines must be visualized
 lapply(smooth_fits, summary)
 
 ##CC: MCMC chains
-get_MCMC <- function(drug_name){
-  pdf(paste0("Figures and Tables/Smooth_Bayesian_fits/MCMC/",drug_name,".pdf"))
-  plot(smooth_fits[[drug_name]]$mcmcList)
+get_MCMC <- function(drug_name, fits, path){
+  pdf(paste0(path,drug_name,".pdf"))
+  plot(fits[[drug_name]]$mcmcList)
   title(drug_name)
   dev.off()
 }
-lapply(as.list(SA_drugs), get_MCMC)
+lapply(as.list(SA_drugs), function (x) get_MCMC(x, smooth_fits, "Figures and Tables/Smooth_Bayesian_fits/MCMC/"))
 
 
 ##CC: models with numeric year
 baseline_dist <- 'lnorm'
+
 get_smooth_drug_specific_fit_year_num <- function(drug_name) {
   print(drug_name)
   ## Subset data to drug
@@ -1569,24 +1570,24 @@ names(year_num_fits_ln) <- SA_drugs
 lapply(year_num_fits_ln, summary)
 
 
-plot_drug_specific_smooth_fit <- function(drug_name){
+plot_drug_specific_smooth_fit <- function(drug_name, data, fits, path){
   print(drug_name)
-  bayes_model <- smooth_fits[[drug_name]]
+  bayes_model <- fits[[drug_name]]
   pred_vars <- c('year_spl1',
                  'year_spl2',
                  'year_spl3',
                  'year_spl4',
                  'year_spl5')
   
-  min_year <- min((MIC_data_std_panel_complete %>%
+  min_year <- min((data %>%
                      filter(drug == drug_name))$year_num)
   
-  max_conc <- max((MIC_data_std_panel_complete %>%
+  max_conc <- max((data %>%
                      filter(drug == drug_name))$START) *2
   
   drug_years = floor(min_year):2020
   
-  png(paste0('Figures and Tables/Smooth_Bayesian_fits/',
+  png(paste0(path,
              drug_name,
              '.png'))
   if(min_year <= 2010){
@@ -1621,9 +1622,9 @@ plot_drug_specific_smooth_fit <- function(drug_name){
   ## at different concentration values over year
   drug_years <- seq(floor(min_year),2020, by = 0.25)
   bp_drug <- bp[match(drug_name, bp$Antimicrobial), "NSbp"] 
-  min_conc <- min((MIC_data_std_panel_complete %>%
+  min_conc <- min((data %>%
                      filter(drug == drug_name))$END)
-  max_conc <- max((MIC_data_std_panel_complete %>%
+  max_conc <- max((data %>%
                      filter(drug == drug_name))$START)
   if (is.na(bp_drug)==TRUE){bp_drug <- floor((min_conc+max_conc)/2)} #for drugs without bp -- CEFTIF
   c1 <- if(min_conc>round(0.25*bp_drug,2)){min_conc} else{c(min_conc, round(0.25*bp_drug,2))}
@@ -1644,7 +1645,7 @@ plot_drug_specific_smooth_fit <- function(drug_name){
                           ci_level = 0.95)
   }
   
-  png(paste0('Figures and Tables/Smooth_Bayesian_fits/',
+  png(paste0(path,
              drug_name,
              '_year_survival.png'))
   
@@ -1700,4 +1701,27 @@ plot_drug_specific_smooth_fit <- function(drug_name){
   dev.off()
 }
 
-lapply(as.list(SA_drugs), plot_drug_specific_smooth_fit)
+lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_std_panel_complete, smooth_fits, "Figures and Tables/Smooth_Bayesian_fits/"))
+
+####sensitivity analysis on 0 lower bound for MICs####
+set.seed(1234)
+MIC_data_sensitivity <- MIC_data_std_panel_complete %>% rowwise() %>%
+  mutate(START_sens = ifelse(START == 0, runif(1,min=0, max=END), START))
+
+#check
+MIC_data_sensitivity %>% group_by(drug, START) %>% summarize(mean=mean(START_sens)) %>% View()
+sum(MIC_data_sensitivity$START_sens>MIC_data_sensitivity$END)
+
+#replace START column with START_sens, because START column is used in modeling and plotting functions
+MIC_data_sensitivity$START <- MIC_data_sensitivity$START_sens
+
+#get model fits for sensitivity analysis
+set.seed(1234)
+smooth_fits_sens <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit(x, MIC_data_sensitivity))
+names(smooth_fits_sens) <- SA_drugs
+
+#plot sensitivity
+lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_sensitivity, smooth_fits_sens, "Figures and Tables/Smooth_Bayesian_fits/Sensitivity Analysis/"))
+
+#MCMC chains
+lapply(as.list(SA_drugs), function (x) get_MCMC(x, smooth_fits_sens, "Figures and Tables/Smooth_Bayesian_fits/Sensitivity Analysis/MCMC/"))
