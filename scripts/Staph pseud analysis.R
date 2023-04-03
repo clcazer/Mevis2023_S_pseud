@@ -1186,7 +1186,19 @@ gtsave(Table1_gt, "Figures and Tables/Table1.docx")
 gtsave(Table1_gt, "Figures and Tables/Table1.html")
 
 
-#MRSP and MSSP antibiogramt ables
+#MRSP and MSSP antibiogram tables
+#needs abbreviation
+Table_MRSP$Abbreviation <- bp$Antimicrobial[match(row.names(Table_MRSP), bp$AM.name)]
+Table_MSSP$Abbreviation <- bp$Antimicrobial[match(row.names(Table_MSSP), bp$AM.name)]
+
+#Number of Isolates - add to Abbreviation column (currently NA)
+Table_MRSP$Abbreviation[is.na(Table_MRSP$Abbreviation)] <- "Number of Isolates"
+Table_MSSP$Abbreviation[is.na(Table_MSSP$Abbreviation)] <- "Number of Isolates"
+
+#move abbreviation to first column
+Table_MRSP <- Table_MRSP %>% relocate("Abbreviation")
+Table_MSSP <- Table_MSSP %>% relocate("Abbreviation")
+
 gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.docx")
 gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.html")
 
