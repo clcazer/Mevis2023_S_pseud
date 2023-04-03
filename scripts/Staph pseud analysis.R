@@ -694,6 +694,22 @@ antibiogram_staph <- antibiogram(data = MIC_interp, index = a_index, group = yea
 names(antibiogram_staph)
 antibiogram_staph <- antibiogram_staph %>% dplyr::rename(Year="data[, group]")
 
+#MRSP vs MSSP antibiogram
+MRSP_MIC_interp <- MIC_interp %>% filter(OXACIL==TRUE)
+MSSP_MIC_interp <- MIC_interp %>% filter(OXACIL==FALSE)
+
+#MRSP
+antibiogram_MRSP <- antibiogram(data = MRSP_MIC_interp, index = a_index, group = years)
+#rename the grouping column to year
+names(antibiogram_MRSP)
+antibiogram_MRSP <- antibiogram_MRSP %>% dplyr::rename(Year="data[, group]")
+
+#MSSP
+antibiogram_MSSP <- antibiogram(data = MSSP_MIC_interp, index = a_index, group = years)
+#rename the grouping column to year
+names(antibiogram_MSSP)
+antibiogram_MSSP <- antibiogram_MSSP %>% dplyr::rename(Year="data[, group]")
+
 rm(years)
 
 ####Refined Antibiogram Table####
@@ -727,6 +743,68 @@ colnames(Table1) <- Table1["Year",] #rename columns, then drop Year
 Table1 <- Table1[!(row.names(Table1) %in% "Year"),]
 
 #later add indicator for Cochran-Armitage test
+
+#MRSP antibiogram table
+antibiogram_round_MRSP <- antibiogram_MRSP
+#reorganizing the columns, put year and total isolates first
+antibiogram_round_MRSP <- antibiogram_round_MRSP %>% relocate(Year, .before = "AMIKAC_Number_Isolates_Tested")
+antibiogram_round_MRSP <- antibiogram_round_MRSP %>% relocate(Year_Number_Isolates_Tested, .before = "AMIKAC_Number_Isolates_Tested")
+antibiogram_round_MRSP <- antibiogram_round_MRSP[ , -which(names(antibiogram_round_MRSP) %in% "Year_Prevalence")] ##remove redundant Year column
+##round Prevalence columns to 2 significant digits and make a percentage
+antibiogram_round_MRSP[,seq(4,ncol(antibiogram_round_MRSP),2)] <- signif(antibiogram_round_MRSP[,seq(4,ncol(antibiogram_round_MRSP),2)], digits=2)*100
+
+
+Table_MRSP <- select(antibiogram_round_MRSP, Year, Year_Number_Isolates_Tested) #start with Year category and total isolates
+#collapse columns of 'number tested' and 'percent resistant' into one column for each AM: %(N)
+for (i in seq(3,(ncol(antibiogram_round_MRSP)),2)){ #for every other column in the overall_abgm (each AM), starting with the Num_Isolates columns
+  tab <- apply(antibiogram_round_MRSP[,c(i+1,i)],1, paste, collapse=" (") #paste the column of Prevalence with column of Number isolates tested; put N tested in parentheses
+  tab <- as.data.frame(paste(tab, ")", sep="")) #close parentheses
+  colnames(tab) <- str_split(colnames(antibiogram_round_MRSP)[i], "_")[[1]][1] #make column name the AM
+  Table_MRSP <- cbind(Table_MRSP, name=tab) #add to Table1
+  rm(tab)
+}
+rm(i)
+#rename columns; bp contains AM abbreviations and full names
+Table_MRSP <- dplyr::rename_with(Table_MRSP, ~bp$AM.name[which(bp$Antimicrobial==.x)], .cols=bp$Antimicrobial)
+Table_MRSP <- dplyr::rename(Table_MRSP, "Number of Isolates"="Year_Number_Isolates_Tested")
+
+#NaN to '-' for %R when no isolates tested
+Table_MRSP <- sapply(Table_MRSP, function(x) {gsub("NaN", "-", x)})
+Table_MRSP <- as.data.frame(t(Table_MRSP)) #swap rows and columns to make longer/not as wide
+colnames(Table_MRSP) <- Table_MRSP["Year",] #rename columns, then drop Year
+Table_MRSP <- Table_MRSP[!(row.names(Table_MRSP) %in% "Year"),]
+
+#MSSP antibiogram table
+antibiogram_round_MSSP <- antibiogram_MSSP
+#reorganizing the columns, put year and total isolates first
+antibiogram_round_MSSP <- antibiogram_round_MSSP %>% relocate(Year, .before = "AMIKAC_Number_Isolates_Tested")
+antibiogram_round_MSSP <- antibiogram_round_MSSP %>% relocate(Year_Number_Isolates_Tested, .before = "AMIKAC_Number_Isolates_Tested")
+antibiogram_round_MSSP <- antibiogram_round_MSSP[ , -which(names(antibiogram_round_MSSP) %in% "Year_Prevalence")] ##remove redundant Year column
+##round Prevalence columns to 2 significant digits and make a percentage
+antibiogram_round_MSSP[,seq(4,ncol(antibiogram_round_MSSP),2)] <- signif(antibiogram_round_MSSP[,seq(4,ncol(antibiogram_round_MSSP),2)], digits=2)*100
+
+
+Table_MSSP <- select(antibiogram_round_MSSP, Year, Year_Number_Isolates_Tested) #start with Year category and total isolates
+#collapse columns of 'number tested' and 'percent resistant' into one column for each AM: %(N)
+for (i in seq(3,(ncol(antibiogram_round_MSSP)),2)){ #for every other column in the overall_abgm (each AM), starting with the Num_Isolates columns
+  tab <- apply(antibiogram_round_MSSP[,c(i+1,i)],1, paste, collapse=" (") #paste the column of Prevalence with column of Number isolates tested; put N tested in parentheses
+  tab <- as.data.frame(paste(tab, ")", sep="")) #close parentheses
+  colnames(tab) <- str_split(colnames(antibiogram_round_MSSP)[i], "_")[[1]][1] #make column name the AM
+  Table_MSSP <- cbind(Table_MSSP, name=tab) #add to Table1
+  rm(tab)
+}
+rm(i)
+#rename columns; bp contains AM abbreviations and full names
+Table_MSSP <- dplyr::rename_with(Table_MSSP, ~bp$AM.name[which(bp$Antimicrobial==.x)], .cols=bp$Antimicrobial)
+Table_MSSP <- dplyr::rename(Table_MSSP, "Number of Isolates"="Year_Number_Isolates_Tested")
+
+#NaN to '-' for %R when no isolates tested
+Table_MSSP <- sapply(Table_MSSP, function(x) {gsub("NaN", "-", x)})
+Table_MSSP <- as.data.frame(t(Table_MSSP)) #swap rows and columns to make longer/not as wide
+colnames(Table_MSSP) <- Table_MSSP["Year",] #rename columns, then drop Year
+Table_MSSP <- Table_MSSP[!(row.names(Table_MSSP) %in% "Year"),]
+
+
 
 ####Prevalence Plots####
 #make a dataframe of only prevalence data for graphing
@@ -1107,6 +1185,13 @@ Table1_gt <- gt(Table1, rowname_col = "Abbreviation") %>%
 gtsave(Table1_gt, "Figures and Tables/Table1.docx")
 gtsave(Table1_gt, "Figures and Tables/Table1.html")
 
+
+#MRSP and MSSP antibiogramt ables
+gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.docx")
+gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.html")
+
+gtsave(gt(Table_MSSP), "Figures and Tables/MSSP_antibiogram.docx")
+gtsave(gt(Table_MSSP), "Figures and Tables/MSSP_antibiogram.html")
 
 ####Breakpoint and Class Table####
 names(bp.table)
