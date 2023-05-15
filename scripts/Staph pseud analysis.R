@@ -29,6 +29,7 @@ require(viridisLite)
 require(splines)
 require(gridExtra)
 require(gtExtras)
+require(gtable)
 require(webshot2)
 require(magick)
 require(png)
@@ -1563,7 +1564,7 @@ baseline_plots <- lapply(as.list(SA_drugs), baselines_fit)
 ## Set baseline distribution
 baseline_dist <- 'weibull'
 
-#### Function for drug specific fits  ####
+#### Function for drug specific fits - laplace prior  ####
 get_smooth_drug_specific_fit <- function(drug_name, data) {
   print(drug_name)
   ## Subset data to drug
@@ -1582,9 +1583,10 @@ get_smooth_drug_specific_fit <- function(drug_name, data) {
   
   ## Prior function: current version is flat priors on scale and shape parameter
   ## of weibull followed by a laplace prior on spline coefficients.
-  prior_log <- function(x) { #CC: x is ?
+  prior_log <- function(x) { #CC: symmetric exponential prior; flat on first two coefficients
     dexp(abs(x[-c(1,2)]), rate = 0.1) ##CC: this is an exponential prior? not laplace prior?; -c(1,2) ignores the first two parameters (keeps flat)?
-  }
+   }
+
   bayesControls(useMLE_start = F)
   bayes_formula <- as.formula(cbind(START, END) ~
                                 year_spl1 + year_spl2 + year_spl3 + year_spl4 + year_spl5)
@@ -1601,13 +1603,58 @@ get_smooth_drug_specific_fit <- function(drug_name, data) {
   return(bayes_model)
 }
 
+
+#### Function for drug specific fits - flat prior  ####
+get_smooth_drug_specific_fit_flatprior <- function(drug_name, data) {
+  print(drug_name)
+  ## Subset data to drug
+  drug_data = data %>% filter(drug == drug_name)
+  
+  if(min(drug_data$Year) <= 2010){ #select year range
+    drug_data <-
+      cbind(drug_data, spline_df[match(round(drug_data$year_num, 2), 
+                                       round(spline_df$year_num, 2)),])
+  }else{
+    drug_data <-
+      cbind(drug_data, spline2_df[match(round(drug_data$year_num, 2), 
+                                        round(spline2_df$year_num, 2)),])
+  }
+  
+  
+  ## Prior function
+  prior_log <- function(x) # flat prior
+  {1}
+  bayesControls(useMLE_start = F)
+  bayes_formula <- as.formula(cbind(START, END) ~
+                                year_spl1 + year_spl2 + year_spl3 + year_spl4 + year_spl5)
+  
+  bayes_model <- ic_bayes(
+    bayes_formula,
+    model = 'aft',
+    dist = baseline_dist,
+    controls = bayesControls(useMLE_start = F, burnIn=5000),
+    data = drug_data,
+    logPriorFxn = prior_log
+  )
+  
+  return(bayes_model)
+}
+
 #get model fits
 set.seed(1234)
 smooth_fits <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit(x, MIC_data_std_panel_complete))
 names(smooth_fits) <- SA_drugs
 
+set.seed(1234)
+smooth_fits_flat <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit_flatprior(x, MIC_data_std_panel_complete))
+names(smooth_fits_flat) <- SA_drugs
+
+penici <- get_smooth_drug_specific_fit_flatprior("PENICI", MIC_data_std_panel_complete)
+
+
 #regression summaries, but note that these are not easily interpretable. Splines must be visualized
 lapply(smooth_fits, summary)
+lapply(smooth_fits_flat, summary)
 
 ##CC: MCMC chains
 get_MCMC <- function(drug_name, fits, path){
@@ -1617,7 +1664,11 @@ get_MCMC <- function(drug_name, fits, path){
   dev.off()
 }
 lapply(as.list(SA_drugs), function (x) get_MCMC(x, smooth_fits, "Figures and Tables/Smooth_Bayesian_fits/MCMC/"))
+lapply(as.list(SA_drugs), function (x) get_MCMC(x, smooth_fits_flat, "Figures and Tables/Smooth_Bayesian_fits_flatprior/MCMC/"))
 
+pdf("penici.pdf")
+plot(penici$mcmcList)
+dev.off()
 
 ##CC: models with numeric year
 baseline_dist <- 'lnorm'
@@ -1799,6 +1850,7 @@ plot_drug_specific_smooth_fit <- function(drug_name, data, fits, path){
 }
 
 lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_std_panel_complete, smooth_fits, "Figures and Tables/Smooth_Bayesian_fits/"))
+lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_std_panel_complete, smooth_fits_flat, "Figures and Tables/Smooth_Bayesian_fits_flatprior/"))
 
 ####sensitivity analysis on 0 lower bound for MICs####
 set.seed(1234)
