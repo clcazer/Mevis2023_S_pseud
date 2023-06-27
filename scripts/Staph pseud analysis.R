@@ -1722,52 +1722,118 @@ names(year_num_fits_ln) <- SA_drugs
 lapply(year_num_fits_ln, summary)
 
 #Frequentist AFT models
-get_smooth_drug_specific_fit_par <- function(drug_name, data) {
-  print(drug_name)
+get_smooth_drug_specific_fit_par <- function(drug_name, data, path) {
+  print(drug_name) #to monitor function progress
+   
   ## Subset data to drug
   drug_data = data %>% filter(drug == drug_name)
   
-  if(min(drug_data$Year) <=2010){
+  ##create spline predictors
+    min_year <- min(drug_data$year_num) #get minimum year for the drug
+    max_year <- max(drug_data$year_num) #get max year
+    years <- seq(min_year, ceiling(max_year), by = 0.01) #create sequence from min_year to end of max year
+    year_scaled <- scale(years) #center and then scale (divide centered columns by SD)
+    year_splines <- bs(year_scaled, df=3) #create three splines
+    par_spline_df <- as.data.frame(cbind(years, year_splines)) #create dataframe of splines and the year variable
+    rownames(par_spline_df) <- par_spline_df$years #put year as rowname
     
-    year_splines <- bs(year_scaled, knots=c(2010, 2014, 2018))
-    par_spline_df <- cbind(
-          years,
-          year_splines
-        )
-    par_spline_df <- as.data.frame(par_spline_df)
-    par_spline_df <- par_spline_df[, colSums(par_spline_df != 0) > 0]
-        rownames(par_spline_df) <- par_spline_df$years
-        
-    drug_data <-
-             cbind(drug_data, par_spline_df[match(round(drug_data$year_num, 2),
-                                             round(par_spline_df$years, 2)),])
-    
-parametric_model <- drug_data %>% select(START, END, matches("[[:digit:]]")) %>%
-                    ic_par(cbind(START, END)~. ,
-                      data=., model="aft", dist="loglogistic")
-  }else{
-    year_splines <- bs(year_scaled, knots=c(2017, 2019, 2021))
-    par_spline_df <- cbind(
-      years,
-      year_splines
-    )
-    par_spline_df <- as.data.frame(par_spline_df)
-    par_spline_df <- par_spline_df[, colSums(par_spline_df != 0) > 0]
-    rownames(par_spline_df) <- par_spline_df$years
-    
+  ##add splines predictors to drug_data, match on year
     drug_data <-
       cbind(drug_data, par_spline_df[match(round(drug_data$year_num, 2),
                                            round(par_spline_df$years, 2)),])
+    
+  #baseline hazard distributions based on visual inspection of baseline fits
+    #and whether the AFT will fit the model and successfully estimate SE.
+    #if all work, preferentially selected Weibull
+    baseline <- if(drug_name %in% c("ERYTH")){
+      "loglogistic"}else{"weibull"}
+    
+  ##create AFT model with the splines as predictors (spline columns have number 1, 2, 3 as column names)
     parametric_model <- drug_data %>% select(START, END, matches("[[:digit:]]")) %>%
       ic_par(cbind(START, END)~. ,
-             data=., model="aft", dist="loglogistic")
+             data=., model="aft", dist=baseline)
+    parametric_model
+
+  ##plot estimated survival probability at different concentration values over years
+  pred_vars <- names(par_spline_df) #get names of spline predictors (1, 2, 3)
+  pred_vars <- pred_vars[pred_vars %nin% "years"]
+  
+  min_year <- round_any(min_year,0.25, ceiling) #round min_year to highest 0.25 for creating newdata and x-axis
+  max_year <- round_any(max_year,0.25, floor) #round max_year to highest 0.25 for creating newdata and x-axis
+  drug_years <- seq(min_year, max_year, by = 0.25) #create sequence of years for newdata and x-axis
+  
+  #select concentrations to plot: bp concentration, 1/4 x bp (if >min), 4xbp (if <max), minimum conc tested, max conc tested
+  bp_drug <- bp[match(drug_name, bp$Antimicrobial), "NSbp"] 
+  min_conc <- min(drug_data$END)
+  max_conc <- max(drug_data$START)
+  if (is.na(bp_drug)==TRUE){bp_drug <- floor((min_conc+max_conc)/2)} #for drugs without bp -- CEFTIF
+  c1 <- if(min_conc>round(0.25*bp_drug,2)){min_conc} else{c(min_conc, round(0.25*bp_drug,2))}
+  c2 <- if(max_conc>round(4*bp_drug,1)){c(round(4*bp_drug,1), max_conc)} else{max_conc}
+  concentrations <- sort(unique(c(c1, bp_drug, c2))) #plot bp concentration, 1/4 x bp (if >min), 4xbp (if <max), minimum conc tested, max conc tested
+  
+  #create confidence intervals
+  new_data <- par_spline_df[round(par_spline_df$years, 2) %in% drug_years, pred_vars] #for every 0.25 year (from drug_years), get pred_vars values
+  surv_probs <- survCIs(parametric_model,
+                        newdata = new_data,
+                        q = concentrations,
+                        ci_level = 0.95)
+  
+  #get median and 95% CI data to plot
+  i = length(concentrations)
+  surv_med = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["estimate (median)"]][i])
+  surv_low = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["lower"]][i])
+  surv_upp = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["upper"]][i])
+  
+  #create plot
+  png(paste0(path,
+             drug_name,
+             '_year_survival.png'))
+  
+  plot_colors <- viridisLite::viridis(n = length(concentrations))
+  
+  plot(drug_years, surv_med, 
+       type = 'l', lty = 1, 
+       ylim = c(0, 1),
+       xlab = paste0('Year'),
+       ylab = 'P[MIC > C]',
+       xaxt = 'n',
+       main = paste0('Effect of Year on ', drug_name),
+       col = plot_colors[i])
+  lines(drug_years, surv_low, lty = 2,
+        col = plot_colors[i])
+  lines(drug_years, surv_upp, lty = 2,
+        col = plot_colors[i])
+  for (i in 1:length(concentrations)) {
+    surv_med = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["estimate (median)"]][i])
+    surv_low = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["lower"]][i])
+    surv_upp = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["upper"]][i])
+    lines(drug_years, surv_med,
+          lty = 1, 
+          col = plot_colors[i])
+    lines(drug_years, surv_low, lty = 2,
+          col = plot_colors[i])
+    lines(drug_years, surv_upp, lty = 2,
+          col = plot_colors[i])
   }
-  parametric_model
-return(parametric_model)
+  
+  legend('top',
+         lty = rep(c(1,2), each = length(concentrations)),
+         col = rep(plot_colors, 2), 
+         legend = c(paste0(concentrations, ', median'),
+                    paste0(concentrations, ', CI 95%')),
+         ncol = 2,
+         title = paste0('C=', drug_name, ' conc.(ug/ml)')
+  )
+  
+  x_ticks = seq(floor(min_year), 2020, by = 1)
+  axis(side = 1, at = x_ticks)
+  dev.off()
+  
+  return(parametric_model) #save parametric model
 }
 
 set.seed(1234)
-par_fits <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit_par(x, MIC_data_std_panel_complete))
+par_fits <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit_par(x, MIC_data_std_panel_complete, "Figures and Tables/Parametric_fits/"))
 names(par_fits) <- SA_drugs
 
 #make plots
@@ -1904,95 +1970,6 @@ plot_drug_specific_smooth_fit <- function(drug_name, data, fits, path){
 
 lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_std_panel_complete, smooth_fits, "Figures and Tables/Smooth_Bayesian_fits/"))
 lapply(as.list(SA_drugs), function (x) plot_drug_specific_smooth_fit(x, MIC_data_std_panel_complete, smooth_fits_flat, "Figures and Tables/Smooth_Bayesian_fits_flatprior/"))
-
-plot_drug_parametric <- function(drug_name, data, fits, path){
-  print(drug_name)
-  model <- fits[[drug_name]]
-  pred_vars <- str_replace_all(names(model$coefficients), "`","")
-  pred_vars <- pred_vars[pred_vars %nin% c("log_alpha", "log_beta")]
-                 
-                 min_year <- min((data %>%
-                                    filter(drug == drug_name))$year_num)
-                 
-              
-                 
-                 ## Interpretable time effect: plot estimated survival probability 
-                 ## at different concentration values over year
-                 drug_years <- seq(floor(min_year),2020, by = 0.25)
-                 bp_drug <- bp[match(drug_name, bp$Antimicrobial), "NSbp"] 
-                 min_conc <- min((data %>%
-                                    filter(drug == drug_name))$END)
-                 max_conc <- max((data %>%
-                                    filter(drug == drug_name))$START)
-                 if (is.na(bp_drug)==TRUE){bp_drug <- floor((min_conc+max_conc)/2)} #for drugs without bp -- CEFTIF
-                 c1 <- if(min_conc>round(0.25*bp_drug,2)){min_conc} else{c(min_conc, round(0.25*bp_drug,2))}
-                 c2 <- if(max_conc>round(4*bp_drug,1)){c(round(4*bp_drug,1), max_conc)} else{max_conc}
-                 concentrations <- sort(unique(c(c1, bp_drug, c2))) #plot bp concentration, 1/4 x bp (if >min), 4xbp (if <max), minimum conc tested, max conc tested
-                 
-                
-                   surv_probs <- survCIs(model,
-                                         newdata = par_spline_df[par_spline_df$years %in% drug_years, 
-                                                             pred_vars],
-                                         q = concentrations,
-                                         ci_level = 0.95)
-                 
-                 png(paste0(path,
-                            drug_name,
-                            '_year_survival.png'))
-                 
-                 plot_colors <- viridisLite::viridis(n = length(concentrations))
-                 
-                 i = length(concentrations)
-                 surv_med = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["estimate (median)"]][i])
-                 surv_low = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["lower"]][i])
-                 surv_upp = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["upper"]][i])
-                 
-                 plot(drug_years, surv_med, 
-                      type = 'l', lty = 1, 
-                      ylim = c(0, 1),
-                      xlab = paste0('Year'),
-                      ylab = 'P[MIC > C]',
-                      xaxt = 'n',
-                      main = paste0('Effect of Year on ', drug_name),
-                      col = plot_colors[i])
-                 lines(drug_years, surv_low, lty = 2,
-                       col = plot_colors[i])
-                 lines(drug_years, surv_upp, lty = 2,
-                       col = plot_colors[i])
-                 for (i in 1:length(concentrations)) {
-                   surv_med = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["estimate (median)"]][i])
-                   surv_low = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["lower"]][i])
-                   surv_upp = 1 - sapply(surv_probs$cis, function(x) as.data.frame(x)[["upper"]][i])
-                   
-                   lines(drug_years, surv_med, 
-                         #type = 'l',
-                         lty = 1, 
-                         #ylim = c(0,1),
-                         #xlab = paste0('Year'),
-                         #ylab = 'P[MIC > C]',
-                         #main = paste0('Effect of Year on ', drug_name),
-                         col = plot_colors[i])
-                   lines(drug_years, surv_low, lty = 2,
-                         col = plot_colors[i])
-                   lines(drug_years, surv_upp, lty = 2,
-                         col = plot_colors[i])
-                 }
-                 
-                 legend('top',
-                        lty = rep(c(1,2), each = length(concentrations)),
-                        col = rep(plot_colors, 2), 
-                        legend = c(paste0(concentrations, ', median'),
-                                   paste0(concentrations, ', CI 95%')),
-                        ncol = 2,
-                        title = paste0('C=', drug_name, ' conc.(ug/ml)')
-                 )
-                 
-                 x_ticks = seq(floor(min_year), 2020, by = 1)
-                 axis(side = 1, at = x_ticks)
-                 dev.off()
-}
-lapply(as.list(SA_drugs), function (x) plot_drug_parametric(x, MIC_data_std_panel_complete, par_fits, "Figures and Tables/Parametric_fits/"))
-
 
 ####sensitivity analysis on 0 lower bound for MICs####
 set.seed(1234)
