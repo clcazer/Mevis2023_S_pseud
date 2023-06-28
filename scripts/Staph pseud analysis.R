@@ -1674,16 +1674,16 @@ names(par_fits) <- SA_drugs
 ####sensitivity analysis on 0 lower bound for MICs####
 set.seed(1234)
 MIC_data_sensitivity <- MIC_data_std_panel_complete %>% rowwise() %>%
-  mutate(START_sens = ifelse(START == 0, runif(1,min=0, max=END), START))
+  mutate(START_sens = ifelse(START == 0, runif(1,min=0, max=END), START)) #replace 0 lower bound with random number between 0 and the MIC
 
 #check
-MIC_data_sensitivity %>% group_by(drug, START) %>% summarize(mean=mean(START_sens)) %>% View()
-sum(MIC_data_sensitivity$START_sens>MIC_data_sensitivity$END)
+MIC_data_sensitivity %>% group_by(drug, START) %>% summarize(mean=mean(START_sens)) %>% View() #mean START is greater than 0
+sum(MIC_data_sensitivity$START_sens>MIC_data_sensitivity$END) #no START are > END
 
 #replace START column with START_sens, because START column is used in modeling and plotting functions
 MIC_data_sensitivity$START <- MIC_data_sensitivity$START_sens
 
 #get model fits for sensitivity analysis
 set.seed(1234)
-smooth_fits_sens <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit_par(x, MIC_data_sensitivity, "Figures and Tables/Sensitivity Analysis/"))
+smooth_fits_sens <- lapply(as.list(SA_drugs), function (x) get_smooth_drug_specific_fit_par(x, MIC_data_sensitivity, "Figures and Tables/Sensitivity Analysis/SA_"))
 names(smooth_fits_sens) <- SA_drugs
