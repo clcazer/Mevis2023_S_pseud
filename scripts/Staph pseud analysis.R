@@ -1791,13 +1791,14 @@ get_smooth_drug_specific_fit_par <- function(drug_name, data, path) {
   
   plot_colors <- viridisLite::viridis(n = length(concentrations))
   
+  par(mar=c(5,4,6.2,2), xpd=T)
   plot(drug_years, surv_med, 
        type = 'l', lty = 1, 
        ylim = c(0, 1),
        xlab = paste0('Year'),
        ylab = 'P[MIC > C]',
        xaxt = 'n',
-       main = paste0('Effect of Year on ', drug_name),
+       #main = paste0('Effect of Year on ', drug_name),
        col = plot_colors[i])
   lines(drug_years, surv_low, lty = 2,
         col = plot_colors[i])
@@ -1816,7 +1817,7 @@ get_smooth_drug_specific_fit_par <- function(drug_name, data, path) {
           col = plot_colors[i])
   }
   
-  legend('top',
+  legend('top', inset=c(0,-0.25),
          lty = rep(c(1,2), each = length(concentrations)),
          col = rep(plot_colors, 2), 
          legend = c(paste0(concentrations, ', median'),
@@ -1825,7 +1826,7 @@ get_smooth_drug_specific_fit_par <- function(drug_name, data, path) {
          title = paste0('C=', drug_name, ' conc.(ug/ml)')
   )
   
-  x_ticks = seq(floor(min_year), 2020, by = 1)
+  x_ticks = seq(floor(min_year), ceiling(max_year), by = 1)
   axis(side = 1, at = x_ticks)
   dev.off()
   
