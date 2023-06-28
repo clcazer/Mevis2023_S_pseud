@@ -1270,8 +1270,6 @@ staph[1735,] #check
 #drugs for SA
 SA_drugs <- unlist(lapply(str_split(names(staph)[str_detect(names(staph),"_MIC")], "_"), '[[', 1))
 
-write_xlsx(staph,"data/CanineStaphpseud_separated2007-2020.xlsx") #save file ready for survival analysis
-
 
 ####Log-Rank Testing####
 #Decided to do log rank tests to test each consecutive year to each other to see if changes from year to year were sig.
@@ -1402,7 +1400,7 @@ MIC_q_table <- gt(MIC_qs, groupname_col = "AM", rowname_col = "Q") %>%
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.docx")
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.html")
 
-####Ritwik and Yuchen MIC analysis####
+####AFT models for MIC analysis####
 #select only Year, full date, and MIC columns
 MIC_data_req_columns <-
   staph %>% 
@@ -1489,15 +1487,7 @@ baselines_fit <- function(drug_name) {
   ## Subset data to drug
   drug_data = MIC_data_std_panel_complete %>% filter(drug == drug_name)
   
-  if(min(drug_data$Year) <= 2010){ #select year range
-    drug_data <-
-      cbind(drug_data, spline_df[match(round(drug_data$year_num, 2), 
-                                       round(spline_df$year_num, 2)),])
-  }else{
-    drug_data <-
-      cbind(drug_data, spline2_df[match(round(drug_data$year_num, 2), 
-                                        round(spline2_df$year_num, 2)),])
-  }
+  #plot
   png(paste0("Figures and Tables/Baseline Fits/",drug_name,".png"))
   diag_baseline(cbind(START, END) ~ year_num,
                 model="ph",
@@ -1505,57 +1495,10 @@ baselines_fit <- function(drug_name) {
                 lgdLocation = "topright")
   title(drug_name)
   dev.off()
-  # assign(paste0(drug_name,"_baseline_plot"), plot)
 }
 baseline_plots <- lapply(as.list(SA_drugs), baselines_fit)
 
 #weibull, lnorm, and loglogistic all seem appropriate/equivalent based on visual examination of plots
-
-##CC: models with numeric year
-baseline_dist <- 'lnorm'
-get_smooth_drug_specific_fit_year_num <- function(drug_name) {
-  print(drug_name)
-  ## Subset data to drug
-  drug_data = MIC_data_std_panel_complete %>% filter(drug == drug_name)
-  
-  if(min(drug_data$Year) <= 2010){ #select year range
-    drug_data <-
-      cbind(drug_data, spline_df[match(round(drug_data$year_num, 2), 
-                                       round(spline_df$year_num, 2)),])
-  }else{
-    drug_data <-
-      cbind(drug_data, spline2_df[match(round(drug_data$year_num, 2), 
-                                        round(spline2_df$year_num, 2)),])
-  }
-  
-  
-  ## Prior function: current version is flat priors on scale and shape parameter
-  ## of weibull followed by a laplace prior on spline coefficients.
-  # prior_log <- function(x) { #CC: x is ?
-  #  dexp(abs(x[-c(1,2)]), rate = 0.1) ##CC: this is an exponential prior? not laplace prior?; -c(1,2) ignores the first two parameters (keeps flat)?
-  #}
-  bayesControls(useMLE_start = F)
-  bayes_formula <- as.formula(cbind(START, END) ~
-                                year_num)
-  
-  bayes_model <- ic_bayes(
-    bayes_formula,
-    model = 'aft',
-    dist = baseline_dist,
-    controls = bayesControls(useMLE_start = F),
-    data = drug_data,
-    # logPriorFxn = prior_log
-  )
-  
-  return(bayes_model)
-}
-
-#get model fits with year as numeric predictor rather than splines
-set.seed(1234)
-year_num_fits_ln <- lapply(as.list(SA_drugs), get_smooth_drug_specific_fit_year_num)
-names(year_num_fits_ln) <- SA_drugs
-#regression model summaries with numeric year predictor
-lapply(year_num_fits_ln, summary)
 
 #Frequentist AFT models - fit model and plot results
 get_smooth_drug_specific_fit_par <- function(drug_name, data, path) {
