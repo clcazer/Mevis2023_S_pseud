@@ -224,8 +224,10 @@ staph <- staph_pseud_separated
 #use histograms to visually show above data
 
 #MIC order
+lapply(susc[AM_cols], unique) #view unique MIC values, then put them in order smallest to largest
 MIC_order <- c("<= 0.06", "<= 0.12", "= 0.12", "<= 0.25", "= 0.25", "<= 0.5", "= 0.5", "> 0.5", "<= 1", "= 1", "> 1", "<= 2", "= 2", "> 2", "<= 4", "= 4", "> 4", 
-               "<= 8", "= 8", "> 8", "<= 16", "= 16", "> 16", "= 32", "> 32", "= 64", "> 64")
+               "<= 8", "= 8", "> 8", "<= 16", "= 16", "> 16", "= 32", "> 32", "= 64", "> 64", "<= 128", NA)
+lapply(susc[AM_cols], function(x) unique(x) %in% MIC_order) #make sure all MIC values are in MIC_order
 susc[AM_cols] <- map_df(susc[AM_cols], function(x) factor(x, levels=MIC_order))
 
 #create histogram for each column in logstaph
@@ -430,7 +432,7 @@ susc <- cbind(susc[ , metadata], select(susc, all_of(AMs_to_include_in_Prev)))
 #this checks for dilution errors and changes un-interpretable MIC (due to plate dilutions not covering breakpoints) to NA
 #it also replaces year/drug combinations completely with NA if there are <30 isolates that are interpretable or more than 30% of isolates cannot be interpreted
 options(warn=1) #print warnings of year/drug combinations replaced with NA
-yearexclude <- data.frame()
+yearexclude <- list()
 for (i in match("AMIKAC",colnames(susc)):match("VANCOM",colnames(susc))){ #for each MIC column
   
   bp.index<-match(names(susc)[i],bp$Antimicrobial) #index of which AM bp should be applied to the i MIC column
@@ -461,8 +463,9 @@ for (i in match("AMIKAC",colnames(susc)):match("VANCOM",colnames(susc))){ #for e
   year_exclude2 <- year_dilutions %>% group_by(Year) %>% filter((sum(NotOK, na.rm=T)/n())>threshold) %>% select(Year) %>% unique()
   #prop.table(table(year_dilutions$Year, year_dilutions$NotOK, useNA="always"),margin=1) #check
   
-  year_exclude <- unique(unlist(c(year_exclude1, year_exclude2)))
-  yearexclude <- rbind(yearexclude, name, year_exclude) #saving for later analysis
+  year_exclude <- list(unique(unlist(c(year_exclude1, year_exclude2))))
+  yearexclude <- append(yearexclude, c(year_exclude)) #saving for later analysis
+  names(yearexclude)[length(yearexclude)] <- name
   
   #report affected AM
   if (nrow(year_exclude1)>0){
