@@ -1428,52 +1428,8 @@ MIC_data_req_columns <-
 #keep only drugs on the standard panel - already done
 MIC_data_std_panel_complete <- na.omit(MIC_data_req_columns) #remove NAs
 
-## Run drug specific categorical regression models on year
-## ic_np fits Turnbull's estimator, while ic_sp fits a semiparametric
-## hazard function estimator based on proportional hazards ('ph') or
-## proportional odds ('po') assumption.
-
-fit_drug_specific_model <- function(drug_name, model_type) {
-  print(drug_name)
-  drug_data <- MIC_data_std_panel_complete %>%
-    dplyr::filter(drug == drug_name) %>%
-    mutate(Year = as.factor(Year))
-  ## Non-parametric fit
-  return(ic_np(cbind(START, END) ~ Year,
-               data = drug_data))
-}
-
-## Fit drug specific models for all drugs
+## Get drugs to model
 SA_drugs <- unique(MIC_data_std_panel_complete$drug)
-
-drug_specific_models <-
-  sapply(as.list(SA_drugs),
-         fit_drug_specific_model)
-names(drug_specific_models) <- SA_drugs
-
-
-## Plot drug specific nonparametraic model fits
-plot_drug_specific_fit <- function(drug_name) {
-  print(drug_name)
-  drug_data <- MIC_data_std_panel_complete %>%
-    dplyr::filter(drug == drug_name)
-  png(paste0('Figures and Tables/Nonparametric Fits/',
-             drug_name, 
-             '.png'))
-  plot(
-    drug_specific_models[[drug_name]],
-    newdata = data.frame(Year = levels(as.factor(drug_data$Year)), 
-                         row.names = levels(as.factor(drug_data$Year))),
-    xlab = paste(drug_name, 'concentration in ug/ml (C)'),
-    ylab = 'P[MIC > C]',
-    col = viridisLite::turbo(n = nlevels(as.factor(drug_data$Year)))
-  )
-  dev.off()
-}
-
-lapply(SA_drugs, plot_drug_specific_fit)
-
-
 
 # Create additional columns (centered at year 2014; numeric continuous year) for modelling
 MIC_data_std_panel_complete$Yeargrp = as.factor(
