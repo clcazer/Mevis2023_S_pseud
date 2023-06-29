@@ -34,10 +34,10 @@ require(webshot2)
 require(magick)
 require(png)
 require(grid)
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
+#if (!require("BiocManager", quietly = TRUE)) #run if Icens is not yet installed in checkpoint
+#  install.packages("BiocManager")
 
-BiocManager::install("Icens") #update all [a] if required
+#BiocManager::install("Icens") #update all [a] if required
 require(Icens)
 require(interval)
 require(survival)
@@ -404,6 +404,12 @@ walk2(MIC_table_names, MIC_gts, ~gtsave(filename = .x, data = .y)) #save
 #### Resistant vs. Susceptible Interpretation####
 #for looking at prevalence of resistance, we include all the antimicrobials from the standard panel (even if they had little MIC variation)
 #use susc data
+
+#include analysis of new VET01S7 breakpoints for CHLORA, ENROFL, and MARBOFL; create duplicate columns, name as "_newBP"
+susc$CHLORA.newBP <- susc$CHLORA
+susc$ENROFL.newBP <- susc$ENROFL
+susc$MARBOF.newBP <- susc$MARBOF
+
 #already excluded AMs with < 30 isolates and those not on standard panel
 #also exclude AM if there is no breakpoint
 AMs_to_exclude_from_Prev <- bp$Antimicrobial[is.na(bp$NSbp)] #missing breakpoints
@@ -463,8 +469,8 @@ for (i in match("AMIKAC",colnames(susc)):match("VANCOM",colnames(susc))){ #for e
   year_exclude2 <- year_dilutions %>% group_by(Year) %>% filter((sum(NotOK, na.rm=T)/n())>threshold) %>% select(Year) %>% unique()
   #prop.table(table(year_dilutions$Year, year_dilutions$NotOK, useNA="always"),margin=1) #check
   
-  year_exclude <- list(unique(unlist(c(year_exclude1, year_exclude2))))
-  yearexclude <- append(yearexclude, c(year_exclude)) #saving for later analysis
+  year_exclude <- unique(unlist(c(year_exclude1, year_exclude2)))
+  yearexclude <- append(yearexclude, c(list(year_exclude))) #saving for later analysis
   names(yearexclude)[length(yearexclude)] <- name
   
   #report affected AM
@@ -480,7 +486,7 @@ for (i in match("AMIKAC",colnames(susc)):match("VANCOM",colnames(susc))){ #for e
   }
   
   #for excluded years, turn all MIC for the given AM into NA
-  susc[susc$Year %in% year_exclude,i] <- as.character(NA)
+  susc[susc$Year %in% unlist(year_exclude),i] <- as.character(NA)
   
   #report number of remaining interpretation issues
   n_min_dil_too_big <- with(year_dilutions, sum(min_dilution_too_big[!(Year %in% year_exclude)]==TRUE, na.rm=T))
@@ -953,6 +959,10 @@ rm(prev, prev2, beta, other, beta_long, other_long, colors, linetype)
 
 
 ####MDR profiles####
+#exclude the newBP columns
+MIC_interp_with_new_BP <- MIC_interp #save for later
+MIC_interp <- MIC_interp %>% select(!contains("newBP"))
+
 #For each isolate, identifies the resistance profile (all the drugs to which the isolate is resistant), tabulates the number of drugs to which it is resistant, identifies the class resistance profile (all the AM classes to which the isolate is resistant), the number of drug classes to which it is resistant
 
 #data: dataset of AM interpretations. Note that if there is no breakpoint, then a dataset of AM interpretations will exclude AM that were tested but don't have a breakpoint.
@@ -998,6 +1008,7 @@ mdr_profile <- function (data, index, AM_class){
 }
 
 #generate mdr profiles
+a_index <- match("AMIKAC",colnames(MIC_interp)):match("VANCOM",colnames(MIC_interp)) #AM columns, excluding new BP
 MDR <- mdr_profile(data = MIC_interp, index = a_index, AM_class = AM_Class)
 sink("Text Results/descriptive results.txt", append=T) ##start saving results to file
 cat("\n number of isolates in the prevalence analysis:  ")
@@ -1123,7 +1134,9 @@ nMDR_yr$prop <- nMDR_yr$n_MDR/nMDR_yr$n_yr
 #Utilize antimicrobials used for prevalence analysis that have been filtered based on previous requirements
 #excluding those with no bp, < 30 isolates, and not on standard panel (this is MIC_interp data)
 #run Cochran Armitage Test for trend over time
-CochranArmitage <- sapply(MIC_interp[,a_index], function(x) CochranArmitageTest(table(MIC_interp$Year, x))) %>% t() %>% as.data.frame()
+a_index_newbp <- match("AMIKAC",colnames(MIC_interp_with_new_BP)):match("VANCOM",colnames(MIC_interp_with_new_BP)) #AM columns with new BP
+a_index_newbp <- a_index_newbp[a_index_newbp %nin% match("CHLORA.newBP",colnames(MIC_interp_with_new_BP))] #exclude CHLORA.newBP becuase it is all NA, will cause CA error
+CochranArmitage <- sapply(MIC_interp_with_new_BP[,a_index_newbp], function(x) CochranArmitageTest(table(MIC_interp_with_new_BP$Year, x))) %>% t() %>% as.data.frame()
 
 #keep only the antibiotic name P.value, Z.value (statistic)
 CochranArmitage$Antibiotic <- row.names(CochranArmitage)
@@ -1211,7 +1224,7 @@ gtsave(gt(Table_MSSP), "Figures and Tables/MSSP_antibiogram.html")
 
 ####Breakpoint and Class Table####
 names(bp.table)
-names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "Non-susceptible breakpoint", "Species", "Site") #re-name
+names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "Not susceptible\nbreakpoint", "Species", "Site") #re-name
 
 #add AM classes
 AM_Class
@@ -1227,7 +1240,9 @@ bp.table$Species <- str_to_title(bp.table$Species)
 #nice gt table
 bp_gt <- gt(bp.table) %>%
   cols_align(align="center",
-             columns=c(S,I,R))
+             columns=c(S,I,R)) %>%
+  tab_footnote("newBP refers to breakpoints that will be in CLSI VET01S7", 
+               location=cells_body(columns=Antimicrobial, rows=str_detect(unlist(bp.table["Antimicrobial"]), "newBP")))
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.docx")
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.html")
 
