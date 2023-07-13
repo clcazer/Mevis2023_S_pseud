@@ -420,7 +420,7 @@ bp <- filter(bp, Antimicrobial %!in% AMs_to_exclude_from_Prev)
 bp <- filter(bp, Antimicrobial %in% names(susc))
 
 #start table of AM name, class, breakpoints
-bp.table <- bp %>% select("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Host.species", "Body.Site")
+bp.table <- bp %>% select("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "Host.species", "Body.Site")
 
 #some AMs in susc do not have a breakpoint; drop them from prevalence analysis
 #use AMs_to_include_in_Prev to filter the susc dataset for just the antibiotics used in the prevalence analysis
@@ -899,7 +899,7 @@ prev <- ggplot(beta_long, aes(Year, value)) +
   geom_point(aes(colour = variable), size=1.5)+
   #geom_label_repel(data = subset(beta_long, Year==2008), aes(label=variable), point.padding=0.25, min.segment.length = 1, nudge_x=0.5, size=5, max.overlaps = Inf)+ ##CC: option to add some missing labels:  max.overlaps = Inf; nudge not working/labels disappearing
   geom_label_repel(data = subset(beta_long, Year==2020), aes(label=variable), point.padding=0.25, min.segment.length =1, nudge_x=1, size=5, max.overlaps = Inf)+  ##CC: option to add some missing labels:  max.overlaps = Inf
-  labs(x="Year", y="Proportion of Non-Susceptible")+
+  labs(x="Year", y="Proportion of Not Susceptible")+
   scale_color_manual("Antimicrobial",values=colors)+
   scale_linetype_manual("Antimicrobial", values=linetype)+
   scale_x_continuous(limits=c(2008,2021), breaks=seq(2008, 2020, 1), expand=c(0,0.2))+
@@ -936,7 +936,7 @@ prev2 <- ggplot(subset(other_long), aes(Year, value)) +
   geom_point(aes(colour=variable), size=1.5)+
   #geom_label_repel(data=subset(other_long, Year==2008), aes(label=variable), point.padding=0.25, min.segment.length = 1, nudge_x=0, size=5)+
   geom_label_repel(data=subset(other_long, Year==2020), aes(label=variable), point.padding=0.25, min.segment.length =1, nudge_x=1, size=5)+
-  labs(x="Year", y="Proportion of Non-Susceptible")+
+  labs(x="Year", y="Proportion of Not Susceptible")+
   scale_color_manual("Antimicrobial",values=colors)+
   scale_linetype_manual("Antimicrobial", values=linetype)+
   scale_x_continuous(limits=c(2008,2021), breaks=seq(2008, 2020, 1), expand=c(0,0.2))+
@@ -1036,12 +1036,13 @@ MDRpct$NumClass <- fct_relevel(MDRpct$NumClass, "0", "1", "2", "3", "4", "5", "6
 #plot % isolates by N resistance classes
 MDRpct_fig <- ggplot(MDRpct, aes(x = as.numeric(NumClass), pct)) + 
   geom_bar(stat = 'identity') + 
-  xlab("Number of Non-Susceptible\nAntimicrobial Classes") + 
+  xlab("Number of Not Susceptible\nAntimicrobial Classes") + 
   ylab("Percent of Isolates") + 
   theme_bw() +
   scale_x_discrete(limits = levels(MDRpct$NumClass))+
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0,25))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        axis.text=element_text(size=14), axis.title=element_text(size=16))
 ggsave("Figures and Tables/MDR/Figure 1.png", MDRpct_fig)
 
 
@@ -1110,7 +1111,7 @@ MDRclassfreq$pct <- MDRclassfreq$value/nrow(MIC_interp) #note that the denominat
 MDRclass_fig <- ggplot(MDRclassfreq, aes(factor(AMclass), pct*100, fill = factor(AMclass))) + 
   geom_bar(stat = 'identity') + 
   xlab("Antimicrobial Class") + 
-  ylab("Percent Non-susceptible Isolates")+ 
+  ylab("Percent Not Susceptible Isolates")+ 
   theme_bw()+
   scale_y_continuous(limits = c(0,100))+
   scale_fill_manual("Class", values=colors, labels = labels)+
@@ -1194,10 +1195,12 @@ Table1$P.Value[Table1$P.Value=="0"] <- "<0.001"
 
 #nice gt table
 Table1_gt <- gt(Table1, rowname_col = "Abbreviation") %>%
-  tab_footnote("For each antimicrobial: Non-susceptible isolate prevalence (number of isolates tested)") %>%
+  tab_footnote("For each antimicrobial: Not susceptible isolate prevalence (number of isolates tested)") %>%
   tab_footnote("P-value from Cochran-Armitage test for trend") %>%
   tab_footnote("2007 was excluded because fewer than 30 isolates were available")%>%
-  tab_footnote("Multidrug Resistance prevalence (number of MDR isolates)", location=cells_stub("MDR"))
+  tab_footnote("Multidrug Resistance prevalence (number of MDR isolates)", location=cells_stub("MDR")) %>%
+  tab_footnote("newBP refers to breakpoints that will be in CLSI VET01S7", 
+               location=cells_stub(contains("newBP")))
 
 gtsave(Table1_gt, "Figures and Tables/Table1.docx")
 gtsave(Table1_gt, "Figures and Tables/Table1.html")
@@ -1214,17 +1217,31 @@ Table_MSSP$Abbreviation[is.na(Table_MSSP$Abbreviation)] <- "Number of Isolates"
 
 #move abbreviation to first column
 Table_MRSP <- Table_MRSP %>% relocate("Abbreviation")
+
 Table_MSSP <- Table_MSSP %>% relocate("Abbreviation")
 
-gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.docx")
-gtsave(gt(Table_MRSP), "Figures and Tables/MRSP_antibiogram.html")
+Table_MRSP_gt <- gt(Table_MRSP)%>%
+  tab_footnote("For each antimicrobial: Not susceptible isolate prevalence (number of isolates tested)") %>%
+tab_footnote("2007 was excluded because fewer than 30 isolates were available")%>%
+  tab_footnote("newBP refers to breakpoints that will be in CLSI VET01S7", 
+               location=cells_body(columns=Abbreviation, rows=str_detect(unlist(Table_MRSP["Abbreviation"]), "newBP")))
 
-gtsave(gt(Table_MSSP), "Figures and Tables/MSSP_antibiogram.docx")
-gtsave(gt(Table_MSSP), "Figures and Tables/MSSP_antibiogram.html")
+Table_MSSP_gt <- gt(Table_MSSP)%>%
+  tab_footnote("For each antimicrobial: Not susceptible isolate prevalence (number of isolates tested)") %>%
+  tab_footnote("2007 was excluded because fewer than 30 isolates were available")%>%
+  tab_footnote("newBP refers to breakpoints that will be in CLSI VET01S7", 
+               location=cells_body(columns=Abbreviation, rows=str_detect(unlist(Table_MSSP["Abbreviation"]), "newBP")))
+
+  
+gtsave(Table_MRSP_gt, "Figures and Tables/MRSP_antibiogram.docx")
+gtsave(Table_MRSP_gt, "Figures and Tables/MRSP_antibiogram.html")
+
+gtsave(Table_MSSP_gt, "Figures and Tables/MSSP_antibiogram.docx")
+gtsave(Table_MSSP_gt, "Figures and Tables/MSSP_antibiogram.html")
 
 ####Breakpoint and Class Table####
 names(bp.table)
-names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "Not susceptible\nbreakpoint", "Species", "Site") #re-name
+names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "NS", "Source", "Species", "Site") #re-name
 
 #add AM classes
 AM_Class
@@ -1236,6 +1253,9 @@ bp.table$Class <- dplyr::recode(bp.table$Class, "A"="Aminoglycoside", "B"="Beta-
 
 #address mixed case in Body site
 bp.table$Species <- str_to_title(bp.table$Species)
+
+#add ">" to NS
+bp.table$NS <- str_c(">", bp$NSbp)
 
 #nice gt table
 bp_gt <- gt(bp.table) %>%
@@ -1412,7 +1432,8 @@ MIC_q_table <- gt(MIC_qs, groupname_col = "AM", rowname_col = "Q") %>%
       glue::glue("{text}<sub>{sub}</sub>")
     })
 
-gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.docx")
+gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.docx") #not working for some reason
+gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.rtf")
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.html")
 
 ####AFT models for MIC analysis####
