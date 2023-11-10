@@ -1,8 +1,1 @@
 Number of isolates analyzed:  1804
- number of isolates in the prevalence analysis:  1784
- pan-susceptible prevalence:  331
- percent of pan-susceptible isolates: 19 %
- number of isolates that are MDR (resistant to 3 or more classes):  836
- percent of isolates that are MDR:  47 %
- >=5 class prevalence:  359
- percent of >=5 class isolates: 20 %

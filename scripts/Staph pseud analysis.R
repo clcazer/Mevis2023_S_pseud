@@ -293,8 +293,9 @@ MIC_table <- lapply(MIC_table, function(x) pivot_wider(x, names_from=x, values_f
 #turn 0 into NA (0's come from the individual Year x AM tables if the MIC is present in at least some years but not others)
 MIC_table <- lapply(MIC_table, function(x) {x[x==0] <- NA; x})
 
-#drop rows that are all NA in MIC columns (there are 27 MIC columns)
-MIC_table <- lapply(MIC_table, function(x) {filter(x, rowSums(is.na(x))<27)})
+#drop rows that are all NA in MIC columns 
+n_MIC_cols <- unique(sapply(MIC_table, ncol))-1 #there are 29 columns, 1 is year; 28 are MIC columns
+MIC_table <- lapply(MIC_table, function(x) {filter(x, rowSums(is.na(x))<n_MIC_cols)})
 
 #then turn NA into blanks
 MIC_table <- lapply(MIC_table, function(x) map_df(x,as.character))
