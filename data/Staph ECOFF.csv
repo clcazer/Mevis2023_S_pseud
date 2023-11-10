@@ -1,0 +1,58 @@
+﻿Antimicrobial,Abbreviation,ECOFF,CI_L,CI_H,Resource,Bact species
+Amikacin,AMIKAC,16,4,16,EUCAST 2023-10-13,S. aureus
+Amoxicillin-clavulanate,AMOCLA,0.03,0.004,0.125,EUCAST 2023-10-13,S. pseud
+Ampicillin,AMPICI,0.5,0.125,0.5,EUCAST 2023-10-13,S. aureus
+Azithromycin,AZITHR,2,1,4,EUCAST 2023-10-13,S. aureus
+Bacitracin,BACITR,,,,,
+Cefazolin,CEFAZO,2,0.5,8,EUCAST 2023-10-13,S. aureus
+Cefovecin,CEFOVE,,,,,
+Cefoxitin,CEFOXI,4,2,8,EUCAST 2023-10-13,S. aureus
+Cefpodoxime,CEFPOD,,,,,
+Ceftazidime,CEFTAZ,32,16,32,EUCAST 2023-10-13,S. aureus
+Ceftiofur,CEFTIF,2,0.25,8,EUCAST 2023-10-13,S. aureus
+Cephalexin,CEPALE,4,1,4,EUCAST 2023-10-13,S. pseud
+Cephalothin,CEPHAL,1,0.25,4,EUCAST 2023-10-13,S. aureus
+Chloramphenicol,CHLORA,16,8,16,EUCAST 2023-10-13,S. aureus
+Chlortetracycline,CHLTET,0.5,0.06,0.5,EUCAST 2023-10-13,S. pseud
+Ciprofloxacin,CIPROF,2,1,2,EUCAST 2023-10-13,S. aureus
+Clarithromycin,CLARYT,,,,,
+Clindamycin,CLINDA,0.25,0.06,0.25,EUCAST 2023-10-13,S. pseud
+Danofloxacin,DANOFL,,,,,
+Daptomycin,DAPTOM,1,0.125,2,EUCAST 2023-10-13,S. aureus
+Doxycycline,DOXYCY,0.125,0.06,0.25,EUCAST 2023-10-13,S. pseud
+Enrofloxacin,ENROFL,0.5,0.125,0.5,EUCAST 2023-10-13,S. pseud
+Erythromycin,ERYTH,0.5,0.125,0.5,EUCAST 2023-10-13,S. pseud
+Florfenicol,FLORFE,2,2,8,EUCAST 2023-10-13,S. pseud
+Gentamicin,GENTAM,0.25,0.125,0.5,EUCAST 2023-10-13,S. pseud
+Imipenem,IMIPEN,0.125,0.03,0.125,EUCAST 2023-10-13,S. aureus
+Kanamycin,KANAMY,8,0.5,64,EUCAST 2023-10-13,S. aureus
+Lincomycin,LINCOM,2,0.5,4,EUCAST 2023-10-13,S. aureus
+Linezolid,LINEZO,4,2,4,EUCAST 2023-10-13,S. aureus
+Marbofloxacin,MARBOF,,,,,
+Minocycline,MINOCY,0.5,0.125,0.5,EUCAST 2023-10-13,S. aureus
+Moxifloxacin,MOXIFL,,,,,
+Neomycin,NEOMYC,1,0.25,1,EUCAST 2023-10-13,S. pseud
+Nitrofurantoin,NITRO,32,8,32,EUCAST 2023-10-13,S. aureus
+Ofloxacin,OFLOXA,1,0.5,1,EUCAST 2023-10-13,S. aureus
+Orbifloxacin,ORBIFL,,,,,
+Oxacillin,OXACIL,2,0.5,2,EUCAST 2023-10-13,S. aureus
+Oxytetracycline,OXYTET,0.5,0.125,0.5,EUCAST 2023-10-13,S. pseud
+Penicillin,PENICI,,,,,
+Piperacillin-tazobactam,PIPTAZ,4,1,16,EUCAST 2023-10-13,S. aureus
+Polymixin B,POLYB,,,,,
+Pradofloxacin,PRADOF,,,,,
+Rifampin,RIFAMP,0.03,0.008,0.016,EUCAST 2023-10-13,S. aureus
+Sulphadimethoxine,SDIMET,,,,,
+Spectinomycin,SPECT,128,32,256,EUCAST 2023-10-13,S. aureus
+Streptomycin,STREPT,16,,,EUCAST 2023-10-13,S. aureus
+Synercid (Quin-Dalfo),SYNERC,1,0.5,2,EUCAST 2023-10-13,S. aureus
+Tetracycline,TETRA,1,0.125,1,EUCAST 2023-10-13,S. pseud
+Tiamulin,TIAMUL,2,,,EUCAST 2023-10-13,S. aureus
+Ticarcillin,TICARC,,,,,
+Ticarcillin/Clavulanic Acid,TICCLA,,,,,
+Tigecycline,TIGECY,0.5,0.25,0.5,EUCAST 2023-10-13,S. pseud
+Tilmicosin,TILMIC,2,0.5,2,EUCAST 2023-10-13,S. pseud
+Tobramycin,TOBRAM,,,,,
+Trimethoprim-Sulfamethoxazole,TRISUL,0.25,0.03,1,EUCAST 2023-10-13,S. aureus
+Tylosin,TYLO,2,0.5,2,EUCAST 2023-10-13,S. pseud
+Vancomycin,VANCOM,2,1,2,EUCAST 2023-10-13,S. aureus

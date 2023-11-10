@@ -54,6 +54,13 @@ names(bp) <- c("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "H
 #split signs from values for R (S. value is same as NSbp)
 bp$R.value <- unlist(lapply(str_split(bp$R," "), '[', 2))
 
+#import epidemiologic cut-off values (ECOFF)
+#import breakpoints
+ecoff <- read.csv("data/Staph ECOFF.csv", encoding = "UTF-8")
+names(ecoff)
+names(ecoff) <- c("AM.name", "Antimicrobial", "ECOFF", "ECOFF_L", "ECOFF_H", "Resource", "Bact.species")
+
+
 ##original_data <- read.csv(file.choose(), stringsAsFactors=FALSE, header=TRUE, colClasses="character")
 staph <- read.csv("data/Staph_fulldata.csv", stringsAsFactors=FALSE, header=TRUE, colClasses= "character", strip.white = TRUE)
 
