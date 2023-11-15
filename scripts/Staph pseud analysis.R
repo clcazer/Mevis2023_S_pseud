@@ -324,62 +324,77 @@ MIC_gts <- lapply(seq_along(MIC_table), function(x) MIC_table_gt(x))
 #list names = AMs
 names(MIC_gts) <- names(MIC_table)
 
-#manually add vertical lines for S/I/R and shade MICs that can't be interpreted with current bp (for AM with bps; reference bp)
+#manually add vertical lines for S/I/R, ECOFF (red; dotted if different than S/R), and shade MICs that can't be interpreted with current bp (for AM with bps; reference bp)
 View(bp)
+View(ecoff)
 MIC_gts[["AMIKAC"]] <- gt_add_divider(MIC_gts[["AMIKAC"]], columns="<= 4", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 16", side="left", style="solid") %>%
+  gt_add_divider(columns="= 16", side="right", color="red", style="dotted") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns="<= 16"))
 
 MIC_gts[["AMOCLA"]] <- gt_add_divider(MIC_gts[["AMOCLA"]], columns="= 0.25", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 1", side="left", style="solid") %>%
+  gt_add_divider(columns="<= 0.12", side="left", color="red", style="dotted") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns="<= 4"))
 
-MIC_gts[["AMPICI"]] <- gt_add_divider(MIC_gts[["AMPICI"]], columns="= 0.25", side="right", style="dashed") #No I
+MIC_gts[["AMPICI"]] <- gt_add_divider(MIC_gts[["AMPICI"]], columns="= 0.25", side="right", style="dashed") %>% #No I
+  gt_add_divider(columns="= 1", side="left", color="red", style="dotted")
 
 MIC_gts[["CEFAZO"]] <- gt_add_divider(MIC_gts[["CEFAZO"]], columns="<= 2", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 8", side="left", style="solid") %>%
+  gt_add_divider(columns="<= 2", side="right", color="red", style="dashed") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns=c("<= 8", "<= 4")))
 
 MIC_gts[["CEFOVE"]] <- gt_add_divider(MIC_gts[["CEFOVE"]], columns="= 0.5", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 2", side="left", style="solid")
 
+MIC_gts[["CEFOXI"]] <- gt_add_divider(MIC_gts[["CEFOXI"]], columns="= 4", side="right", color="red", style="dotted")
+
 MIC_gts[["CEFPOD"]] <- gt_add_divider(MIC_gts[["CEFPOD"]], columns="<= 2", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 8", side="left", style="solid") 
 
+MIC_gts[["CEFTIF"]] <- gt_add_divider(MIC_gts[["CEFTIF"]], columns="= 2", side="right", color="red", style="dotted")
+
 MIC_gts[["CEPHAL"]] <- gt_add_divider(MIC_gts[["CEPHAL"]], columns="<= 2", side="right", style="dashed") %>% 
-  gt_add_divider(columns="> 4", side="left", style="solid")
+  gt_add_divider(columns="> 4", side="left", style="solid") %>%
+  gt_add_divider(columns="<= 2", side="left", color="red", style="dotted")
 
 MIC_gts[["CHLORA"]] <- gt_add_divider(MIC_gts[["CHLORA"]], columns="= 8", side="right", style="dashed") %>% 
-  gt_add_divider(columns="> 16", side="left", style="solid")
+  gt_add_divider(columns="> 16", side="left", color="red", style="solid")
 
 MIC_gts[["CLINDA"]] <- gt_add_divider(MIC_gts[["CLINDA"]], columns="= 0.5", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 4", side="left", style="solid") %>%
+  gt_add_divider(columns="<= 0.25", side="left", color="red", style="dotted") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns=c("> 1", "> 2"))) #add footnote, these can be interpreted as S/NS
 
-MIC_gts[["DOXYCY"]] <- gt_add_divider(MIC_gts[["DOXYCY"]], columns="<= 0.12", side="right", style="dashed") %>% 
+MIC_gts[["DOXYCY"]] <- gt_add_divider(MIC_gts[["DOXYCY"]], columns="<= 0.12", side="right", color="red", style="dashed") %>% 
   gt_add_divider(columns="= 0.5", side="left", style="solid") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns=c("<= 0.25", "<= 2")))
 
-MIC_gts[["ENROFL"]] <- gt_add_divider(MIC_gts[["ENROFL"]], columns="= 0.5", side="right", style="dashed") %>% 
+MIC_gts[["ENROFL"]] <- gt_add_divider(MIC_gts[["ENROFL"]], columns="= 0.5", side="right", color="red", style="dashed") %>% 
   gt_add_divider(columns="> 2", side="left", style="solid") 
 
-MIC_gts[["ERYTH"]] <- gt_add_divider(MIC_gts[["ERYTH"]], columns="= 0.5", side="right", style="dashed") %>% 
+MIC_gts[["ERYTH"]] <- gt_add_divider(MIC_gts[["ERYTH"]], columns="= 0.5", side="right", color="red", style="dashed") %>% 
   gt_add_divider(columns="> 4", side="left", style="solid") 
 
 MIC_gts[["GENTAM"]] <- gt_add_divider(MIC_gts[["GENTAM"]], columns="= 4", side="right", style="dashed") %>% 
+  gt_add_divider(columns="<= 0.25", side="right", color="red", style="dotted") %>%
   gt_add_divider(columns="> 8", side="left", style="solid")
+
+MIC_gts[["IMIPEN"]] <- gt_add_divider(MIC_gts[["IMIPEN"]], columns="<= 1", side="left", color="red", style="dotted")
 
 MIC_gts[["MARBOF"]] <- gt_add_divider(MIC_gts[["MARBOF"]], columns="= 1", side="right", style="dashed") %>% 
   gt_add_divider(columns="> 2", side="left", style="solid")
 
-MIC_gts[["MINOCY"]] <- gt_add_divider(MIC_gts[["MINOCY"]], columns="<= 0.5", side="right", style="dashed") %>% 
+MIC_gts[["MINOCY"]] <- gt_add_divider(MIC_gts[["MINOCY"]], columns="<= 0.5", side="right", color="red", style="dashed") %>% 
   gt_add_divider(columns="= 2", side="left", style="solid")
 
-MIC_gts[["NITRO"]] <- gt_add_divider(MIC_gts[["NITRO"]], columns="= 32", side="right", style="dashed") %>% 
+MIC_gts[["NITRO"]] <- gt_add_divider(MIC_gts[["NITRO"]], columns="= 32", side="right", color="red", style="dashed") %>% 
   gt_add_divider(columns="> 64", side="left", style="solid") %>%
   tab_footnote(footnote="UTI breakpoint")
 
 MIC_gts[["OXACIL"]] <- gt_add_divider(MIC_gts[["OXACIL"]], columns="<= 0.25", side="right", style="dashed") %>% 
+  gt_add_divider(columns="= 2", side="right", color="red", style="dotted") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns=c("<= 2")))
 
 MIC_gts[["PENICI"]] <- gt_add_divider(MIC_gts[["PENICI"]], columns="= 0.12", side="right", style="dashed")
@@ -388,15 +403,18 @@ MIC_gts[["PRADOF"]] <- gt_add_divider(MIC_gts[["PRADOF"]], columns="<= 0.25", si
   gt_add_divider(columns="= 2", side="left", style="solid")
 
 MIC_gts[["RIFAMP"]] <- gt_add_divider(MIC_gts[["RIFAMP"]], columns="<= 1", side="right", style="dashed") %>% 
+  gt_add_divider(columns="<= 1", side="left", color="red", style="dotted") %>%
   gt_add_divider(columns="> 2", side="left", style="solid")
 
 MIC_gts[["TETRA"]] <- gt_add_divider(MIC_gts[["TETRA"]], columns="<= 0.25", side="right", style="dashed") %>% 
   gt_add_divider(columns="= 1", side="left", style="solid") %>%
+  gt_add_divider(columns="= 1", side="right", color="red", style="dotted") %>%
   tab_style(style=cell_fill(color="#d3d3d3"), locations=cells_body(columns=c("<= 1", "<= 2", "<= 4")))
 
-MIC_gts[["TRISUL"]] <- gt_add_divider(MIC_gts[["TRISUL"]], columns="= 2", side="right", style="dashed")
+MIC_gts[["TRISUL"]] <- gt_add_divider(MIC_gts[["TRISUL"]], columns="= 2", side="right", style="dashed") %>%
+  gt_add_divider(columns="<= 0.5", side="left", color="red", style="dotted")
 
-MIC_gts[["VANCOM"]] <- gt_add_divider(MIC_gts[["VANCOM"]], columns="= 2", side="right", style="dashed")
+MIC_gts[["VANCOM"]] <- gt_add_divider(MIC_gts[["VANCOM"]], columns="= 2", side="right", color="red", style="dashed")
 
 #make names for saving tables as both html and png
 MIC_table_names <- imap(MIC_gts, ~paste0("Figures and Tables/MIC_Tables/",.y,  "_MIC_table.html")) %>% flatten()
@@ -428,7 +446,7 @@ bp <- filter(bp, Antimicrobial %!in% AMs_to_exclude_from_Prev)
 bp <- filter(bp, Antimicrobial %in% names(susc))
 
 #start table of AM name, class, breakpoints
-bp.table <- bp %>% select("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "Host.species", "Body.Site")
+bp.table <- bp %>% select("AM.name", "Antimicrobial", "S", "I", "R", "NSbp", "Resource", "Host.species", "Body.Site", "Bact.species")
 
 #some AMs in susc do not have a breakpoint; drop them from prevalence analysis
 #use AMs_to_include_in_Prev to filter the susc dataset for just the antibiotics used in the prevalence analysis
@@ -1249,7 +1267,7 @@ gtsave(Table_MSSP_gt, "Figures and Tables/MSSP_antibiogram.html")
 
 ####Breakpoint and Class Table####
 names(bp.table)
-names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "NS", "Source", "Species", "Site") #re-name
+names(bp.table) <- c("Antimicrobial", "Abbreviation", "S", "I", "R", "NS", "Source", "Host Species", "Site", "Bacterial Species") #re-name
 
 #add AM classes
 AM_Class
@@ -1258,19 +1276,45 @@ bp.table$Class <- AM_Class$Class[match(bp.table$Abbreviation, AM_Class$AM)]
 #rename classes (currently one-letter abbreviations)
 bp.table$Class <- dplyr::recode(bp.table$Class, "A"="Aminoglycoside", "B"="Beta-Lactam", "P"="Phenicol", "M"="Macrolide/Lincosamide",
                          "T"="Tetracycline", "F"="Fluoroquinolone", "AN"="Ansamycin", "G"="Glycopeptide", "N"="Nitrofuran", "S"="Sulfonamide")
+bp.table$Class[bp.table$Abbreviation=="CHLORA.newBP"] <- "Phenicol"
+bp.table$Class[bp.table$Abbreviation=="ENROFL.newBP"] <- "Fluoroquinolone"
+bp.table$Class[bp.table$Abbreviation=="MARBOF.newBP"] <- "Fluoroquinolone"
 
-#address mixed case in Body site
-bp.table$Species <- str_to_title(bp.table$Species)
+#address mixed case in host species
+bp.table$`Host Species` <- str_to_title(bp.table$`Host Species`)
 
 #add ">" to NS
 bp.table$NS <- str_c(">", bp$NSbp)
+
+#add ECOFF
+bp.table$ECOFF <- ecoff$ECOFF[match(bp.table$Abbreviation, ecoff$Antimicrobial)]
+bp.table$`ECOFF Bacterial Species` <- ecoff$Bact.species[match(bp.table$Abbreviation, ecoff$Antimicrobial)]
+bp.table$ECOFF <- str_c(">", bp.table$ECOFF)
+
+#clean bacterial species
+bp.table$`Bacterial Species`<- str_replace(bp.table$`Bacterial Species`, "all staph", "all staphylococci")
+bp.table$`Bacterial Species`<- str_replace(bp.table$`Bacterial Species`, "pseud", "S. pseudintermedius")
+bp.table$`Bacterial Species`<- str_replace(bp.table$`Bacterial Species`, "staph other than aureus", "all staphylococci other than S. aureus")
+bp.table$`ECOFF Bacterial Species`<- str_replace(bp.table$`ECOFF Bacterial Species`, "S. pseud", "S. pseudintermedius")
+
+#re-order columns; drop source and replace with footnote
+bp.table <- bp.table[,c("Antimicrobial", "Class", "Abbreviation", "S", "I", "R", "NS", 
+                         "Host Species", "Site", "Bacterial Species", "ECOFF", "ECOFF Bacterial Species")]
 
 #nice gt table
 bp_gt <- gt(bp.table) %>%
   cols_align(align="center",
              columns=c(S,I,R)) %>%
+  tab_spanner(label = "Interpretive Criteria", columns=3:10) %>%
+  tab_spanner(label = "Epidemiologic Cut-off Value", columns=11:12) %>%
   tab_footnote("newBP refers to breakpoints that will be in CLSI VET01S7", 
-               location=cells_body(columns=Antimicrobial, rows=str_detect(unlist(bp.table["Antimicrobial"]), "newBP")))
+               location=cells_body(columns=Antimicrobial, rows=str_detect(unlist(bp.table["Antimicrobial"]), "newBP"))) %>%
+tab_footnote("Resp: Respiratory; SST: Skin/Soft Tissue; UTI: Urinary Tract Infection", 
+             location=cells_column_labels(columns=Site)) %>%
+  tab_footnote("Interpretive Criteria sourced from CLSI VET01S Ed6, except for new BP from Ed7", 
+               location=cells_column_spanners(spanners="Interpretive Criteria")) %>%
+  tab_footnote("ECOFF sourced from EUCAST, October 13, 2023", 
+               location=cells_column_spanners(spanners="Epidemiologic Cut-off Value"))
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.docx")
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.html")
 
