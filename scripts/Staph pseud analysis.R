@@ -614,13 +614,26 @@ names(MIC_interp) #available BLs
 #first see the problem - OXACIL-R isolates that are S to one or more other b-lactams. (no bp for ticcla or ticarc or CEFTIF)
 OXA_R_probs <- MIC_interp %>% filter(OXACIL==TRUE & (PENICI==FALSE | AMPICI==FALSE | AMOCLA==FALSE | CEFAZO==FALSE | CEFOVE==FALSE | CEFPOD==FALSE | CEPHAL==FALSE))
 View(OXA_R_probs)
-table(MIC_interp$PENICI, MIC_interp$OXACIL, dnn=c("PEN", "OXA"), useNA="always") ##there is 1 OXA-R that is PEN-S. Also 3 OXA-R that are PEN-NA, these could also be changed to PEN-R but we haven't here
-table(MIC_interp$AMOCLA, MIC_interp$OXACIL, dnn=c("AMC", "OXA"), useNA="always") #183 isolates OXA-R AMC-S; 50 isolates OXA-R AMC-NA
-table(MIC_interp$AMPICI, MIC_interp$OXACIL, dnn=c("AMP", "OXA"), useNA="always") #12 isolates OXA-R AMP-S; 3 isolates OXA-R AMP-NA
-table(MIC_interp$CEFAZO, MIC_interp$OXACIL, dnn=c("CEFA", "OXA"), useNA="always") #467 isolates OXA-R CEFA-S; 51 isolates OXA-R CEFA-NA
-table(MIC_interp$CEFOVE, MIC_interp$OXACIL, dnn=c("CEFO", "OXA"), useNA="always") #44 isolates OXA-R CEFO-S; 33 isolates OXA-R CEFO-NA
-table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFP", "OXA"), useNA="always") #298 isolates OXA-R CEFP-S; 9 isolates OXA-R CEFP-NA
-table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEP", "OXA"), useNA="always") #522 isolates OXA-R CEF-S; 17 isolates OXA-R CEP-NA
+sink("Text Results/beta-lactams.txt")
+print("pre-modification OXACIL vs Other Beta-Lactams: FALSE = S; TRUE = NS")
+print("OXACIL-R should be resistant to all other beta-lactams in this analysis")
+print("OXACIL-S should be susceptible to AMOCLA, CEFAZO, CEFOVE, CEFPOD, CEPHAL")
+table(MIC_interp$PENICI, MIC_interp$OXACIL, dnn=c("PENICI", "OXA"), useNA="always") ##there is 1 OXA-R that is PEN-S. Also 3 OXA-R that are PEN-NA, these could also be changed to PEN-R but we haven't here
+table(MIC_interp$AMOCLA, MIC_interp$OXACIL, dnn=c("AMOCLA", "OXA"), useNA="always") #183 isolates OXA-R AMC-S; 50 isolates OXA-R AMC-NA
+table(MIC_interp$AMPICI, MIC_interp$OXACIL, dnn=c("AMPICI", "OXA"), useNA="always") #12 isolates OXA-R AMP-S; 3 isolates OXA-R AMP-NA
+table(MIC_interp$CEFAZO, MIC_interp$OXACIL, dnn=c("CEFAZO", "OXA"), useNA="always") #467 isolates OXA-R CEFA-S; 51 isolates OXA-R CEFA-NA
+table(MIC_interp$CEFOVE, MIC_interp$OXACIL, dnn=c("CEFOVE", "OXA"), useNA="always") #44 isolates OXA-R CEFO-S; 33 isolates OXA-R CEFO-NA
+table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFPOD", "OXA"), useNA="always") #298 isolates OXA-R CEFP-S; 9 isolates OXA-R CEFP-NA
+table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEPHAL", "OXA"), useNA="always") #522 isolates OXA-R CEF-S; 17 isolates OXA-R CEP-NA
+print("pre-modification PENICI vs other Beta-Lactams")
+print("PENICI-S should be susceptible to all other beta-lactams")
+table(MIC_interp$AMOCLA, MIC_interp$PENICI, dnn=c("AMOCLA", "PENICI"), useNA="always")
+table(MIC_interp$AMPICI, MIC_interp$PENICI, dnn=c("AMPICI", "PENICI"), useNA="always")
+table(MIC_interp$CEFAZO, MIC_interp$PENICI, dnn=c("CEFAZO", "PENICI"), useNA="always")
+table(MIC_interp$CEFOVE, MIC_interp$PENICI, dnn=c("CEFOVE", "PENICI"), useNA="always")
+table(MIC_interp$CEFPOD, MIC_interp$PENICI, dnn=c("CEFPOD", "PENICI"), useNA="always")
+table(MIC_interp$CEPHAL, MIC_interp$PENICI, dnn=c("CEPHAL", "PENICI"), useNA="always")
+sink()
 
 #OXA-R isolates = resistant to pencillins, B lactam combos, cephems, carbapenems
 #changing S to R: as.logical() turns any value > 0 into TRUE and TRUE has value of 1. so if the other b-lactam is S or R, adding TRUE and using as.logical() makes it a TRUE (R)
@@ -651,7 +664,7 @@ table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEP", "OXA"), useNA="always")
 #now for PEN-S: these isolates should be susceptible to all other b-lactams
 PEN_probs <- MIC_interp %>% filter(PENICI==FALSE & (OXACIL==T | AMPICI==T | AMOCLA==T | CEFAZO==T | CEFOVE==T | CEFPOD==T | CEPHAL==T)) #only AMPICI has inconsistent data for this isolate
 View(PEN_probs)
-table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PEN", "AMP"), useNA="always")  #1 isolate, S to PENICI, R to AMPICI. AMPICI and PENICI should be consistent with each other (both are penicillinase-labile penicillins)
+table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PENICI", "AMPICI"), useNA="always")  #1 isolate, S to PENICI, R to AMPICI. AMPICI and PENICI should be consistent with each other (both are penicillinase-labile penicillins)
 #since the PENICI breakpoint is for humans and the AMPICI breakpoint is for dogs, we preferentially took the AMPICI breakpoint interpretation and turned the PENICI to R. 
 
 MIC_interp <- MIC_interp  %>% mutate(PENICI = case_when(AMPICI==TRUE ~ as.logical(PENICI+TRUE),
@@ -684,6 +697,28 @@ table(MIC_interp$CEFAZO, MIC_interp$OXACIL, dnn=c("CEFA", "OXA"), useNA="always"
 table(MIC_interp$CEFOVE, MIC_interp$OXACIL, dnn=c("CEFO", "OXA"), useNA="always")
 table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFP", "OXA"), useNA="always")
 table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEP", "OXA"), useNA="always")
+
+#print final classifications
+sink("Text Results/beta-lactams.txt", append=T)
+print("post-modification OXACIL vs Other Beta-Lactams: FALSE = S; TRUE = NS")
+print("OXACIL-R should be resistant to all other beta-lactams in this analysis")
+print("OXACIL-S should be susceptible to AMOCLA, CEFAZO, CEFOVE, CEFPOD, CEPHAL")
+table(MIC_interp$PENICI, MIC_interp$OXACIL, dnn=c("PENICI", "OXA"), useNA="always") ##there is 1 OXA-R that is PEN-S. Also 3 OXA-R that are PEN-NA, these could also be changed to PEN-R but we haven't here
+table(MIC_interp$AMOCLA, MIC_interp$OXACIL, dnn=c("AMOCLA", "OXA"), useNA="always") #183 isolates OXA-R AMC-S; 50 isolates OXA-R AMC-NA
+table(MIC_interp$AMPICI, MIC_interp$OXACIL, dnn=c("AMPICI", "OXA"), useNA="always") #12 isolates OXA-R AMP-S; 3 isolates OXA-R AMP-NA
+table(MIC_interp$CEFAZO, MIC_interp$OXACIL, dnn=c("CEFAZO", "OXA"), useNA="always") #467 isolates OXA-R CEFA-S; 51 isolates OXA-R CEFA-NA
+table(MIC_interp$CEFOVE, MIC_interp$OXACIL, dnn=c("CEFOVE", "OXA"), useNA="always") #44 isolates OXA-R CEFO-S; 33 isolates OXA-R CEFO-NA
+table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFPOD", "OXA"), useNA="always") #298 isolates OXA-R CEFP-S; 9 isolates OXA-R CEFP-NA
+table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEPHAL", "OXA"), useNA="always") #522 isolates OXA-R CEF-S; 17 isolates OXA-R CEP-NA
+print("post-modification PENICI vs other Beta-Lactams")
+print("PENICI-S should be susceptible to all other beta-lactams")
+table(MIC_interp$AMOCLA, MIC_interp$PENICI, dnn=c("AMOCLA", "PENICI"), useNA="always")
+table(MIC_interp$AMPICI, MIC_interp$PENICI, dnn=c("AMPICI", "PENICI"), useNA="always")
+table(MIC_interp$CEFAZO, MIC_interp$PENICI, dnn=c("CEFAZO", "PENICI"), useNA="always")
+table(MIC_interp$CEFOVE, MIC_interp$PENICI, dnn=c("CEFOVE", "PENICI"), useNA="always")
+table(MIC_interp$CEFPOD, MIC_interp$PENICI, dnn=c("CEFPOD", "PENICI"), useNA="always")
+table(MIC_interp$CEPHAL, MIC_interp$PENICI, dnn=c("CEPHAL", "PENICI"), useNA="always")
+sink()
 
 rm(OXA_R_probs, OXA_S_probs, PEN_probs)
 

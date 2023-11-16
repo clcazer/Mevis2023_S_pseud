@@ -1,0 +1,140 @@
+[1] "pre-modification OXACIL vs Other Beta-Lactams: FALSE = S; TRUE = NS"
+[1] "OXACIL-R should be resistant to all other beta-lactams in this analysis"
+[1] "OXACIL-S should be susceptible to AMOCLA, CEFAZO, CEFOVE, CEFPOD, CEPHAL"
+       OXA
+PENICI  FALSE TRUE <NA>
+  FALSE   248    0    2
+  TRUE    570  581    8
+  <NA>    150    3  222
+       OXA
+AMOCLA  FALSE TRUE <NA>
+  FALSE   824    0    2
+  TRUE      0  534    0
+  <NA>    144   50  230
+       OXA
+AMPICI  FALSE TRUE <NA>
+  FALSE   607    0    7
+  TRUE    211  581    4
+  <NA>    150    3  221
+       OXA
+CEFAZO  FALSE TRUE <NA>
+  FALSE   824    0    2
+  TRUE      0  533    0
+  <NA>    144   51  230
+       OXA
+CEFOVE  FALSE TRUE <NA>
+  FALSE   891    0    2
+  TRUE      0  551    0
+  <NA>     77   33  230
+       OXA
+CEFPOD  FALSE TRUE <NA>
+  FALSE   968    0   11
+  TRUE      0  575    0
+  <NA>      0    9  221
+       OXA
+CEPHAL  FALSE TRUE <NA>
+  FALSE   889    0    9
+  TRUE      0  567    0
+  <NA>     79   17  223
+[1] "pre-modification PENICI vs other Beta-Lactams"
+[1] "PENICI-S should be susceptible to all other beta-lactams"
+       PENICI
+AMOCLA  FALSE TRUE <NA>
+  FALSE   214  491  121
+  TRUE      0  531    3
+  <NA>     36  137  251
+       PENICI
+AMPICI  FALSE TRUE <NA>
+  FALSE   250  362    2
+  TRUE      0  796    0
+  <NA>      0    1  373
+       PENICI
+CEFAZO  FALSE TRUE <NA>
+  FALSE   214  491  121
+  TRUE      0  530    3
+  <NA>     36  138  251
+       PENICI
+CEFOVE  FALSE TRUE <NA>
+  FALSE   221  525  147
+  TRUE      0  548    3
+  <NA>     29   86  225
+       PENICI
+CEFPOD  FALSE TRUE <NA>
+  FALSE   250  577  152
+  TRUE      0  572    3
+  <NA>      0   10  220
+       PENICI
+CEPHAL  FALSE TRUE <NA>
+  FALSE   240  537  121
+  TRUE      0  564    3
+  <NA>     10   58  251
+[1] "post-modification OXACIL vs Other Beta-Lactams: FALSE = S; TRUE = NS"
+[1] "OXACIL-R should be resistant to all other beta-lactams in this analysis"
+[1] "OXACIL-S should be susceptible to AMOCLA, CEFAZO, CEFOVE, CEFPOD, CEPHAL"
+       OXA
+PENICI  FALSE TRUE <NA>
+  FALSE   248    0    2
+  TRUE    570  581    8
+  <NA>    150    3  222
+       OXA
+AMOCLA  FALSE TRUE <NA>
+  FALSE   824    0    2
+  TRUE      0  534    0
+  <NA>    144   50  230
+       OXA
+AMPICI  FALSE TRUE <NA>
+  FALSE   607    0    7
+  TRUE    211  581    4
+  <NA>    150    3  221
+       OXA
+CEFAZO  FALSE TRUE <NA>
+  FALSE   824    0    2
+  TRUE      0  533    0
+  <NA>    144   51  230
+       OXA
+CEFOVE  FALSE TRUE <NA>
+  FALSE   891    0    2
+  TRUE      0  551    0
+  <NA>     77   33  230
+       OXA
+CEFPOD  FALSE TRUE <NA>
+  FALSE   968    0   11
+  TRUE      0  575    0
+  <NA>      0    9  221
+       OXA
+CEPHAL  FALSE TRUE <NA>
+  FALSE   889    0    9
+  TRUE      0  567    0
+  <NA>     79   17  223
+[1] "post-modification PENICI vs other Beta-Lactams"
+[1] "PENICI-S should be susceptible to all other beta-lactams"
+       PENICI
+AMOCLA  FALSE TRUE <NA>
+  FALSE   214  491  121
+  TRUE      0  531    3
+  <NA>     36  137  251
+       PENICI
+AMPICI  FALSE TRUE <NA>
+  FALSE   250  362    2
+  TRUE      0  796    0
+  <NA>      0    1  373
+       PENICI
+CEFAZO  FALSE TRUE <NA>
+  FALSE   214  491  121
+  TRUE      0  530    3
+  <NA>     36  138  251
+       PENICI
+CEFOVE  FALSE TRUE <NA>
+  FALSE   221  525  147
+  TRUE      0  548    3
+  <NA>     29   86  225
+       PENICI
+CEFPOD  FALSE TRUE <NA>
+  FALSE   250  577  152
+  TRUE      0  572    3
+  <NA>      0   10  220
+       PENICI
+CEPHAL  FALSE TRUE <NA>
+  FALSE   240  537  121
+  TRUE      0  564    3
+  <NA>     10   58  251
