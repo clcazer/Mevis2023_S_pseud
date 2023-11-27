@@ -286,8 +286,67 @@ MIC_qs$Q <- paste0("MIC_",lapply(str_split(row.names(MIC_qs),"_"), '[',3))
 
 #later add Log-rank test p-values
 
-rm(staph_MICs, MIC_q50, MIC_q90, AM_cols_staph_MICs)
 
+####MIC scatterplots for beta-lactams####
+require(GGally)
+plot_MICs <- staph_MICs %>% select(OXACIL_MIC, AMPICI_MIC, AMOCLA_MIC, CEFPOD_MIC, CEPHAL_MIC, CEFTIF_MIC, CEFAZO_MIC, CEFOVE_MIC, CEFOXI_MIC, PENICI_MIC) %>%
+  mutate_if(is.character, as.numeric)
+  
+BL.scatter <- grid.arrange(
+    ggplot(plot_MICs, aes(OXACIL_MIC, AMPICI_MIC))+
+    geom_point(position="jitter", size=0.5)+
+    stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+    scale_y_continuous(trans="log2", breaks=2^seq(-3,5,1), labels=c("0.12", "0.25", "0.5", "1", "2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, AMOCLA_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(-3,6,1), labels=c("0.12", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEFAZO_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(0,5,1), labels=c("1", "2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEFOVE_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.75, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(-3,4,1), labels=c("0.12", "0.25", "0.5", "1", "2", "4", "8", "16"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEFOXI_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.95, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(1,5,1), labels=c("2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEFPOD_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(0,5,1), labels=c("1", "2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEFTIF_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, CEPHAL_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.2, label.y.npc=0.95, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(1,5,1), labels=c("2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ggplot(plot_MICs, aes(OXACIL_MIC, PENICI_MIC))+
+      geom_point(position="jitter", size=0.5)+
+      stat_cor(method="spearman", label.x.npc=0.8, label.y.npc=0.05, size=2)+
+      scale_y_continuous(trans="log2", breaks=2^seq(-4,5,1), labels=c("0.06", "0.12", "0.25", "0.5", "1", "2", "4", "8", "16", "32"))+
+      scale_x_continuous(trans="log2", breaks=2^seq(-2,3,1), labels=c("0.25", "0.5", "1", "2", "4", "8")),
+    ncol=2,
+    nrow=5
+  )
+ggsave("Figures and Tables/beta-lactam scatterplots.png", BL.scatter, width=7, height=10.5, units="in")
+      
+      
+  
+
+rm(staph_MICs, MIC_q50, MIC_q90, AM_cols_staph_MICs)
 
 ####tables of MIC values####
 #tabulate number of isolates with each MIC value by year and antimicrobial, output list
