@@ -1,0 +1,6 @@
+[1] "examine possibility of inducible clindamycin resistance - isolates that appear sensitive to CLINDA but are intermediate/resistant to erythromycin"
+       ERYTH
+CLINDA  FALSE TRUE <NA>
+  FALSE   910    3    1
+  TRUE      5  844    0
+  <NA>      0    1   20

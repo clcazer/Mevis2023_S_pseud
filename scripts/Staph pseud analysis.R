@@ -781,6 +781,12 @@ sink()
 
 rm(OXA_R_probs, OXA_S_probs, PEN_probs)
 
+#examine possibility of inducible clindamycin resistance - isolates that appear sensitive to CLINDA but are intermediate/resistant to erythromycin
+sink("Text Results/Clinda-Eryth.txt")
+print("examine possibility of inducible clindamycin resistance - isolates that appear sensitive to CLINDA but are intermediate/resistant to erythromycin")
+table(MIC_interp$CLINDA, MIC_interp$ERYTH, dnn=c("CLINDA", "ERYTH"), useNA="always")
+sink()
+
 ##### Antibiogram #####
 #generate antibiogram: prevalence of NS for each AM; data grouped by user-defined variable
 
