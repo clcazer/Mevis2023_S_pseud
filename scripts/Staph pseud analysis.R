@@ -1398,7 +1398,25 @@ bp.table$NS <- str_c(">", bp$NSbp)
 #add ECOFF
 bp.table$ECOFF <- ecoff$ECOFF[match(bp.table$Abbreviation, ecoff$Antimicrobial)]
 bp.table$`ECOFF Bacterial Species` <- ecoff$Bact.species[match(bp.table$Abbreviation, ecoff$Antimicrobial)]
-bp.table$ECOFF <- str_c(">", bp.table$ECOFF)
+
+#add ceftiofur ECOFF (there is no bp)
+bp.table <- add_row(bp.table, 
+        Antimicrobial="Ceftiofur",
+        Class="Beta-Lactam",
+        Abbreviation="CEFTIF",
+        S="N/A",
+        I="N/A",
+        R="N/A",
+        NS="N/A", 
+        `Host Species`="N/A", 
+        Site="N/A",
+        `Bacterial Species`="N/A", 
+        ECOFF=ecoff$ECOFF[ecoff$Antimicrobial=="CEFTIF"], 
+        `ECOFF Bacterial Species`=ecoff$Bact.species[ecoff$Antimicrobial=="CEFTIF"],
+        .after=which(bp.table$Abbreviation=="CEFPOD"))
+
+#add "> " to ECOFF
+bp.table$ECOFF <- str_c("> ", bp.table$ECOFF)
 
 #clean bacterial species
 bp.table$`Bacterial Species`<- str_replace(bp.table$`Bacterial Species`, "all staph", "all staphylococci")
@@ -1423,7 +1441,9 @@ tab_footnote("Resp: Respiratory; SST: Skin/Soft Tissue; UTI: Urinary Tract Infec
   tab_footnote("Interpretive Criteria sourced from CLSI VET01S Ed6, except for new BP from Ed7", 
                location=cells_column_spanners(spanners="Interpretive Criteria")) %>%
   tab_footnote("ECOFF sourced from EUCAST, October 13, 2023", 
-               location=cells_column_spanners(spanners="Epidemiologic Cut-off Value"))
+               location=cells_column_spanners(spanners="Epidemiologic Cut-off Value")) %>%
+  tab_footnote("ECOFF falls within the susceptible category and splits the wildtype population",
+               location=cells_body(columns=ECOFF, rows=(as.numeric(str_split_i(bp.table$S, " ",2)) > as.numeric(str_split_i(bp.table$ECOFF, " ",2))))) #where the S bp is > ECOFF
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.docx")
 gtsave(bp_gt, "Figures and Tables/Breakpoint table.html")
 
