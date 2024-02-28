@@ -686,6 +686,7 @@ table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFPOD", "OXA"), useNA="alway
 table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEPHAL", "OXA"), useNA="always") #522 isolates OXA-R CEF-S; 17 isolates OXA-R CEP-NA
 print("pre-modification PENICI vs other Beta-Lactams")
 print("PENICI-S should be susceptible to all other beta-lactams")
+print("PENICI-R should be resistant to other penicillinase-labile penicillins: ampicillin")
 table(MIC_interp$AMOCLA, MIC_interp$PENICI, dnn=c("AMOCLA", "PENICI"), useNA="always")
 table(MIC_interp$AMPICI, MIC_interp$PENICI, dnn=c("AMPICI", "PENICI"), useNA="always")
 table(MIC_interp$CEFAZO, MIC_interp$PENICI, dnn=c("CEFAZO", "PENICI"), useNA="always")
@@ -730,6 +731,13 @@ MIC_interp <- MIC_interp  %>% mutate(PENICI = case_when(AMPICI==TRUE ~ as.logica
                                                         TRUE ~ PENICI))
 table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PEN", "AMP"), useNA="always") #changed
 
+#PEN-R isolates should be R to ampicillin
+View(MIC_interp %>% filter(PENICI==TRUE & AMPICI==F))
+table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PENICI", "AMPICI"), useNA="always") #362 isolates that are PEN-R and AMP-S
+MIC_interp <- MIC_interp  %>% mutate(AMPICI = case_when(PENICI==TRUE ~ as.logical(AMPICI+TRUE),
+                                          TRUE ~ AMPICI))
+table(MIC_interp$PENICI, MIC_interp$AMPICI, dnn=c("PEN", "AMP"), useNA="always") #changed
+
 #OXA-S: isolates should be S to b-lactam combos, cephems, carbapenems
 OXA_S_probs <- MIC_interp %>% filter(OXACIL==F & (AMOCLA==T | CEFAZO==T | CEFOVE==T | CEFPOD==T | CEPHAL==T))
 View(OXA_S_probs)
@@ -771,6 +779,7 @@ table(MIC_interp$CEFPOD, MIC_interp$OXACIL, dnn=c("CEFPOD", "OXA"), useNA="alway
 table(MIC_interp$CEPHAL, MIC_interp$OXACIL, dnn=c("CEPHAL", "OXA"), useNA="always") #522 isolates OXA-R CEF-S; 17 isolates OXA-R CEP-NA
 print("post-modification PENICI vs other Beta-Lactams")
 print("PENICI-S should be susceptible to all other beta-lactams")
+print("PENICI-R should be resistant to other penicillinase-labile penicillins: ampicillin")
 table(MIC_interp$AMOCLA, MIC_interp$PENICI, dnn=c("AMOCLA", "PENICI"), useNA="always")
 table(MIC_interp$AMPICI, MIC_interp$PENICI, dnn=c("AMPICI", "PENICI"), useNA="always")
 table(MIC_interp$CEFAZO, MIC_interp$PENICI, dnn=c("CEFAZO", "PENICI"), useNA="always")
