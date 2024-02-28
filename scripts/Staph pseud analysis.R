@@ -1616,6 +1616,8 @@ MIC_q_table <- gt(MIC_qs, groupname_col = "AM", rowname_col = "Q") %>%
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.docx") #not working for some reason
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.rtf")
 gtsave(MIC_q_table, "Figures and Tables/MIC_quantiles.html")
+#note that asteriks are added manually to the MIC_q_table to indicate where dilution changes occured
+
 
 ####AFT models for MIC analysis####
 #select only Year, full date, and MIC columns
